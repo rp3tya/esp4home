@@ -1,0 +1,33 @@
+esphome:
+  name: reswitch
+  platform: ESP8266
+  board: nodemcu
+
+wifi:
+  ap:
+    ssid: !secret ap_ssid
+    password: !secret ap_pass
+  reboot_timeout: 10min
+
+logger:
+  level: DEBUG
+  esp8266_store_log_strings_in_flash: False
+
+web_server:
+  port: 80
+
+status_led:
+  pin: 
+    number: GPIO16
+    inverted: yes
+
+switch:
+  - platform: gpio
+    pin: D5
+    id: myled
+    name: "MyLed"
+
+interval:
+  - interval: 1min
+    then:
+      switch.toggle: myled

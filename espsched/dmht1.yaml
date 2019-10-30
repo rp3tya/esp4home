@@ -1,0 +1,42 @@
+substitutions:
+  device_id: dmht1
+  device_name: DMHT1
+
+esphome:
+  name: ${device_id}
+  platform: ESP32
+  board: wemosbat
+
+wifi:
+  networks:
+    - ssid: !secret ssid
+      password: !secret pass
+  reboot_timeout: 5min
+
+logger:
+  level: ERROR
+
+deep_sleep:
+  run_duration: 30s
+  sleep_duration: 3570s
+
+mqtt:
+  broker: housekeeper
+#  username: DVES_USER
+#  password: DVES_PASS
+
+sensor:
+  - platform: adc
+    pin: GPIO32
+    attenuation: 11db
+    name: ${device_name} Moisture
+    update_interval: 10s
+  - platform: dht
+    pin: GPIO22
+    model: DHT11
+    temperature:
+      name: ${device_name} Temperature
+    humidity:
+      name: ${device_name} Humidity
+    update_interval: 10s
+

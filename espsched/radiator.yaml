@@ -1,0 +1,143 @@
+substitutions:
+  device_id: radiator
+  device_name: Radiator
+  boost_on_click: "true"
+
+esphome:
+  name: ${device_id}
+  platform: ESP8266
+  board: esp01_1m
+  arduino_version: dev
+  esp8266_restore_from_flash: false
+
+wifi:
+  networks:
+    - ssid: !secret ssid
+      password: !secret pass
+  reboot_timeout: 5min
+
+logger:
+  level: ERROR
+  esp8266_store_log_strings_in_flash: false
+
+web_server:
+  port: 80
+
+ota:
+  port: 8266
+
+api:
+  port: 6053
+  reboot_timeout: 5min
+
+globals:
+  - id: heating
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+  - id: boost_timeout
+    type: int
+    restore_value: yes
+    initial_value: '60'
+# json::parse_json("{'value':60}", [](JsonObject &root){ id(boost_timeout)=root["value"]; } );
+
+output:
+  - platform: esp8266_pwm
+    id: green_led
+    pin:
+      number: GPIO13
+      inverted: True
+    min_power: 0.0
+    max_power: 1.0
+light:
+  - platform: monochromatic
+    internal: yes
+    id: boosting
+    output: green_led
+
+switch:
+  - platform: gpio
+    internal: yes
+    id: relay
+    pin:
+      number: GPIO12
+      inverted: false
+
+  - platform: template
+    internal: no
+    id: ${device_id}_heating
+    name: ${device_name} Heating
+    lambda: "return id(heating);"
+    turn_on_action:
+      - lambda: "id(heating) = true;"
+      - switch.turn_on: relay
+    turn_off_action:
+      - lambda: "id(heating) = false;"
+      - if:
+          condition:
+            not:
+              switch.is_on: ${device_id}_boosting
+          then:
+            switch.turn_off: relay
+
+  - platform: template
+    internal: no
+    id: ${device_id}_boosting
+    name: ${device_name} Boosting
+    lambda: "return id(boosting).current_values.is_on();"
+
+    turn_on_action:
+      - light.turn_on:
+          id: boosting
+          transition_length: 0s
+    on_turn_on:
+      - lambda: "id(green_led).set_min_power(0.025);"
+      - light.turn_off:
+          id: boosting
+          transition_length: !lambda "return id(boost_timeout)*60*1000;"
+      - switch.turn_on: relay
+
+    turn_off_action:
+      - light.turn_off:
+          id: boosting
+          transition_length: 0s
+    on_turn_off:
+      - light.turn_off:
+          id: boosting
+          transition_length: 0s
+      - lambda: "id(green_led).set_min_power(0.0);"
+      - if:
+          condition:
+            lambda: 'return !id(heating);'
+          then:
+            switch.turn_off: relay
+
+binary_sensor:
+  - platform: gpio
+    internal: yes
+    id: ${device_id}_button
+    name: ${device_name} Button
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: true
+
+    on_multi_click:
+
+    - timing: ['ON for at most 1s', 'OFF for at most 1s', 'ON for at most 1s', 'OFF for at least 0.2s']
+      then:
+        - logger.log: Double click
+        - if:
+            condition:
+              lambda: "return ${boost_on_click};"
+            then:
+              - switch.toggle: ${device_id}_boosting
+
+    - timing: ['ON for 1s to 2s', 'OFF for at least 0.5s']
+      then:
+        - logger.log: Long click
+
+    - timing: ['ON for at most 1s', 'OFF for at least 0.5s']
+      then:
+        - logger.log: Single click
+

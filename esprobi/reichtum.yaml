@@ -1,0 +1,808 @@
+esphome:
+  name: reichtum
+  platform: ESP8266
+  board: nodemcu
+  includes:
+    - i2c_atmega.h
+
+wifi:
+  ssid: !secret ssid
+  password: !secret pass
+  ap:
+    ssid: !secret ssid
+    password: !secret pass
+  reboot_timeout: 0s
+
+logger:
+  level: DEBUG
+  esp8266_store_log_strings_in_flash: False
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+status_led:
+  pin: 
+    number: GPIO16
+    inverted: yes
+
+binary_sensor:
+# Living
+  - platform: custom
+    lambda: |-
+      auto living_dt0 = new RemoteSensor(0x16, 10); App.register_component(living_dt0);
+      auto living_dt1 = new RemoteSensor(0x16,  7); App.register_component(living_dt1);
+      auto living_dt2 = new RemoteSensor(0x16,  8); App.register_component(living_dt2);
+      auto living_dt3 = new RemoteSensor(0x16,  9); App.register_component(living_dt3);
+      auto living_dt6 = new RemoteSensor(0x16, 11); App.register_component(living_dt6);
+      auto living_dt7 = new RemoteSensor(0x16, 12); App.register_component(living_dt7);
+      auto living_wt1 = new RemoteSensor(0x11, 11); App.register_component(living_wt1);
+      auto living_wt2 = new RemoteSensor(0x11, 12); App.register_component(living_wt2);
+      return {
+        living_dt0, living_dt1, living_dt2, living_dt3, living_dt6, living_dt7, living_wt1, living_wt2,
+      };
+    binary_sensors:
+      - id: living_dt0
+        name: "Living Door Touch 0"
+        internal: yes
+        on_press:
+          then:
+            - switch.turn_off: living_dr1
+            - switch.turn_off: living_dr2
+            - switch.turn_off: living_dr3
+      - id: living_dt1
+        name: "Living Door Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: living_dr1
+      - id: living_dt2
+        name: "Living Door Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: living_dr2
+      - id: living_dt3
+        name: "Living Door Touch 3"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: living_dr3
+      - id: living_dt6
+        name: "Living Door Touch 6"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: living_wr1
+                    - switch.is_on: living_wr2
+                then:
+                  - cover.stop: living_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(living_ws1).position < 100;
+                      then:
+                        - cover.open: living_ws1
+      - id: living_dt7
+        name: "Living Door Touch 7"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: living_wr1
+                    - switch.is_on: living_wr2
+                then:
+                  - cover.stop: living_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(living_ws1).position > 0;
+                      then:
+                        - cover.close: living_ws1
+      - id: living_wt1
+        name: "Living Window Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: living_wr1
+                    - switch.is_on: living_wr2
+                then:
+                  - cover.stop: living_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(living_ws1).position < 100;
+                      then:
+                        - cover.open: living_ws1
+      - id: living_wt2
+        name: "Living Window Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: living_wr1
+                    - switch.is_on: living_wr2
+                then:
+                  - cover.stop: living_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(living_ws1).position > 0;
+                      then:
+                        - cover.close: living_ws1
+# Kitchen
+  - platform: custom
+    lambda: |-
+      auto kitchen_dt0 = new RemoteSensor(0x15, 10); App.register_component(kitchen_dt0);
+      auto kitchen_dt1 = new RemoteSensor(0x15,  7); App.register_component(kitchen_dt1);
+      auto kitchen_dt2 = new RemoteSensor(0x15,  8); App.register_component(kitchen_dt2);
+      auto kitchen_dt3 = new RemoteSensor(0x15,  9); App.register_component(kitchen_dt3);
+      auto kitchen_dt6 = new RemoteSensor(0x15, 11); App.register_component(kitchen_dt6);
+      auto kitchen_dt7 = new RemoteSensor(0x15, 12); App.register_component(kitchen_dt7);
+      auto kitchen_wt1 = new RemoteSensor(0x12, 11); App.register_component(kitchen_wt1);
+      auto kitchen_wt2 = new RemoteSensor(0x12, 12); App.register_component(kitchen_wt2);
+      return {
+        kitchen_dt0, kitchen_dt1, kitchen_dt2, kitchen_dt3, kitchen_dt6, kitchen_dt7, kitchen_wt1, kitchen_wt2,
+      };
+    binary_sensors:
+      - id: kitchen_dt0
+        name: "Kitchen Door Touch 0"
+        internal: yes
+        on_press:
+          then:
+            - switch.turn_off: kitchen_dr1
+            - switch.turn_off: kitchen_dr2
+            - switch.turn_off: kitchen_dr3
+      - id: kitchen_dt1
+        name: "Kitchen Door Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: kitchen_dr1
+      - id: kitchen_dt2
+        name: "Kitchen Door Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: kitchen_dr2
+      - id: kitchen_dt3
+        name: "Kitchen Door Touch 3"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: kitchen_dr3
+      - id: kitchen_dt6
+        name: "Kitchen Door Touch 6"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: kitchen_wr1
+                    - switch.is_on: kitchen_wr2
+                then:
+                  - cover.stop: kitchen_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(kitchen_ws1).position < 100;
+                      then:
+                        - cover.open: kitchen_ws1
+      - id: kitchen_dt7
+        name: "Kitchen Door Touch 7"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: kitchen_wr1
+                    - switch.is_on: kitchen_wr2
+                then:
+                  - cover.stop: kitchen_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(kitchen_ws1).position > 0;
+                      then:
+                        - cover.close: kitchen_ws1
+      - id: kitchen_wt1
+        name: "Kitchen Window Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: kitchen_wr1
+                    - switch.is_on: kitchen_wr2
+                then:
+                  - cover.stop: kitchen_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(kitchen_ws1).position < 100;
+                      then:
+                        - cover.open: kitchen_ws1
+      - id: kitchen_wt2
+        name: "Kitchen Window Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: kitchen_wr1
+                    - switch.is_on: kitchen_wr2
+                then:
+                  - cover.stop: kitchen_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(kitchen_ws1).position > 0;
+                      then:
+                        - cover.close: kitchen_ws1
+# Bedroom
+  - platform: custom
+    lambda: |-
+      auto bedroom_dt0 = new RemoteSensor(0x14, 10); App.register_component(bedroom_dt0);
+      auto bedroom_dt1 = new RemoteSensor(0x14,  7); App.register_component(bedroom_dt1);
+      auto bedroom_dt2 = new RemoteSensor(0x14,  8); App.register_component(bedroom_dt2);
+      auto bedroom_dt3 = new RemoteSensor(0x14,  9); App.register_component(bedroom_dt3);
+      auto bedroom_dt6 = new RemoteSensor(0x14, 11); App.register_component(bedroom_dt6);
+      auto bedroom_dt7 = new RemoteSensor(0x14, 12); App.register_component(bedroom_dt7);
+      auto bedroom_wt1 = new RemoteSensor(0x13, 11); App.register_component(bedroom_wt1);
+      auto bedroom_wt2 = new RemoteSensor(0x13, 12); App.register_component(bedroom_wt2);
+      return {
+        bedroom_dt0, bedroom_dt1, bedroom_dt2, bedroom_dt3, bedroom_dt6, bedroom_dt7, bedroom_wt1, bedroom_wt2,
+      };
+    binary_sensors:
+      - id: bedroom_dt0
+        name: "Bedroom Door Touch 0"
+        internal: yes
+        on_press:
+          then:
+            - switch.turn_off: bedroom_dr1
+            - switch.turn_off: bedroom_dr2
+            - switch.turn_off: bedroom_dr3
+      - id: bedroom_dt1
+        name: "Bedroom Door Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: bedroom_dr1
+      - id: bedroom_dt2
+        name: "Bedroom Door Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: bedroom_dr2
+      - id: bedroom_dt3
+        name: "Bedroom Door Touch 3"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: bedroom_dr3
+      - id: bedroom_dt6
+        name: "Bedroom Door Touch 6"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: bedroom_wr1
+                    - switch.is_on: bedroom_wr2
+                then:
+                  - cover.stop: bedroom_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(bedroom_ws1).position < 100;
+                      then:
+                        - cover.open: bedroom_ws1
+      - id: bedroom_dt7
+        name: "Bedroom Door Touch 7"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: bedroom_wr1
+                    - switch.is_on: bedroom_wr2
+                then:
+                  - cover.stop: bedroom_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(bedroom_ws1).position > 0;
+                      then:
+                        - cover.close: bedroom_ws1
+      - id: bedroom_wt1
+        name: "Bedroom Window Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: bedroom_wr1
+                    - switch.is_on: bedroom_wr2
+                then:
+                  - cover.stop: bedroom_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(bedroom_ws1).position < 100;
+                      then:
+                        - cover.open: bedroom_ws1
+      - id: bedroom_wt2
+        name: "Bedroom Window Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: bedroom_wr1
+                    - switch.is_on: bedroom_wr2
+                then:
+                  - cover.stop: bedroom_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(bedroom_ws1).position > 0;
+                      then:
+                        - cover.close: bedroom_ws1
+# Kidsroom
+  - platform: custom
+    lambda: |-
+      auto kidsroom_dt0 = new RemoteSensor(0x18, 10); App.register_component(kidsroom_dt0);
+      auto kidsroom_dt1 = new RemoteSensor(0x18,  7); App.register_component(kidsroom_dt1);
+      auto kidsroom_dt2 = new RemoteSensor(0x18,  8); App.register_component(kidsroom_dt2);
+      auto kidsroom_dt3 = new RemoteSensor(0x18,  9); App.register_component(kidsroom_dt3);
+      auto kidsroom_dt6 = new RemoteSensor(0x18, 11); App.register_component(kidsroom_dt6);
+      auto kidsroom_dt7 = new RemoteSensor(0x18, 12); App.register_component(kidsroom_dt7);
+      auto kidsroom_wt1 = new RemoteSensor(0x17, 11); App.register_component(kidsroom_wt1);
+      auto kidsroom_wt2 = new RemoteSensor(0x17, 12); App.register_component(kidsroom_wt2);
+      return {
+        kidsroom_dt0, kidsroom_dt1, kidsroom_dt2, kidsroom_dt3, kidsroom_dt6, kidsroom_dt7, kidsroom_wt1, kidsroom_wt2,
+      };
+    binary_sensors:
+      - id: kidsroom_dt0
+        name: "Kidsroom Door Touch 0"
+        internal: yes
+        on_press:
+          then:
+            - switch.turn_off: kidsroom_dr1
+            - switch.turn_off: kidsroom_dr2
+            - switch.turn_off: kidsroom_dr3
+      - id: kidsroom_dt1
+        name: "Kidsroom Door Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: kidsroom_dr1
+      - id: kidsroom_dt2
+        name: "Kidsroom Door Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: kidsroom_dr2
+      - id: kidsroom_dt3
+        name: "Kidsroom Door Touch 3"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: kidsroom_dr3
+            - switch.toggle: stairway_dr1
+      - id: kidsroom_dt6
+        name: "Kidsroom Door Touch 6"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: kidsroom_wr1
+                    - switch.is_on: kidsroom_wr2
+                then:
+                  - cover.stop: kidsroom_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(kidsroom_ws1).position < 100;
+                      then:
+                        - cover.open: kidsroom_ws1
+      - id: kidsroom_dt7
+        name: "Kidsroom Door Touch 7"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: kidsroom_wr1
+                    - switch.is_on: kidsroom_wr2
+                then:
+                  - cover.stop: kidsroom_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(kidsroom_ws1).position > 0;
+                      then:
+                        - cover.close: kidsroom_ws1
+      - id: kidsroom_wt1
+        name: "Kidsroom Window Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: kidsroom_wr1
+                    - switch.is_on: kidsroom_wr2
+                then:
+                  - cover.stop: kidsroom_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(kidsroom_ws1).position < 100;
+                      then:
+                        - cover.open: kidsroom_ws1
+      - id: kidsroom_wt2
+        name: "Kidsroom Window Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - if:
+                condition:
+                  or:
+                    - switch.is_on: kidsroom_wr1
+                    - switch.is_on: kidsroom_wr2
+                then:
+                  - cover.stop: kidsroom_ws1
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(kidsroom_ws1).position > 0;
+                      then:
+                        - cover.close: kidsroom_ws1
+# Bathroom
+  - platform: custom
+    lambda: |-
+      auto bathroom_dt0 = new RemoteSensor(0x19, 10); App.register_component(bathroom_dt0);
+      auto bathroom_dt1 = new RemoteSensor(0x19,  7); App.register_component(bathroom_dt1);
+      auto bathroom_dt2 = new RemoteSensor(0x19,  8); App.register_component(bathroom_dt2);
+      auto bathroom_dt3 = new RemoteSensor(0x19,  9); App.register_component(bathroom_dt3);
+      return {
+        bathroom_dt0, bathroom_dt1, bathroom_dt2, bathroom_dt3,
+      };
+    binary_sensors:
+      - id: bathroom_dt0
+        name: "Bathroom Door Touch 0"
+        internal: yes
+        on_press:
+          then:
+            - switch.turn_off: bathroom_dr1
+            - switch.turn_off: bathroom_dr2
+            - switch.turn_off: bathroom_dr3
+      - id: bathroom_dt1
+        name: "Bathroom Door Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: bathroom_dr1
+      - id: bathroom_dt2
+        name: "Bathroom Door Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: bathroom_dr2
+      - id: bathroom_dt3
+        name: "Bathroom Door Touch 3"
+        internal: yes
+        on_press:
+          then:
+            - script.stop: bathroom_fan_auto_off
+            - script.execute: bathroom_fan_auto_off
+# Stairway
+  - platform: custom
+    lambda: |-
+      auto stairway_dt0 = new RemoteSensor(0x1A, 10); App.register_component(stairway_dt0);
+      auto stairway_dt1 = new RemoteSensor(0x1A,  7); App.register_component(stairway_dt1);
+      auto stairway_dt2 = new RemoteSensor(0x1A,  8); App.register_component(stairway_dt2);
+      auto stairway_dt3 = new RemoteSensor(0x1A,  9); App.register_component(stairway_dt3);
+      return {
+        stairway_dt0, stairway_dt1, stairway_dt2, stairway_dt3,
+      };
+    binary_sensors:
+      - id: stairway_dt0
+        name: "Stairway Door Touch 0"
+        internal: yes
+        on_press:
+          then:
+            - switch.turn_off: stairway_dr1
+            - switch.turn_off: stairway_dr2
+            - switch.turn_off: stairway_dr3
+      - id: stairway_dt1
+        name: "Stairway Door Touch 1"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: stairway_dr1
+      - id: stairway_dt2
+        name: "Stairway Door Touch 2"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: stairway_dr2
+      - id: stairway_dt3
+        name: "Stairway Door Touch 3"
+        internal: yes
+        on_press:
+          then:
+            - switch.toggle: stairway_dr3
+
+switch:
+# Living
+  - platform: custom
+    lambda: |-
+      auto living_dr1 = new RemoteSwitch(0x16,  2); App.register_component(living_dr1);
+      auto living_dr2 = new RemoteSwitch(0x16,  3); App.register_component(living_dr2);
+      auto living_dr3 = new RemoteSwitch(0x16,  4); App.register_component(living_dr3);
+      auto living_wr1 = new RemoteSwitch(0x11,  2); App.register_component(living_wr1);
+      auto living_wr2 = new RemoteSwitch(0x11,  3); App.register_component(living_wr2);
+      return {
+        living_dr1, living_dr2, living_dr3, living_wr1, living_wr2,
+      };
+    switches:
+      - id: living_dr1
+        name: "Living Door Relay 1"
+        internal: no
+        inverted: yes
+      - id: living_dr2
+        name: "Living Door Relay 2"
+        internal: no
+        inverted: yes
+      - id: living_dr3
+        name: "Living Door Relay 3"
+        internal: no
+        inverted: yes
+      - id: living_wr1
+        name: "Living Window Relay 1"
+        internal: yes
+        inverted: yes
+      - id: living_wr2
+        name: "Living Window Relay 2"
+        internal: yes
+        inverted: yes
+# Kitchen
+  - platform: custom
+    lambda: |-
+      auto kitchen_dr1 = new RemoteSwitch(0x15,  2); App.register_component(kitchen_dr1);
+      auto kitchen_dr2 = new RemoteSwitch(0x15,  3); App.register_component(kitchen_dr2);
+      auto kitchen_dr3 = new RemoteSwitch(0x15,  4); App.register_component(kitchen_dr3);
+      auto kitchen_wr1 = new RemoteSwitch(0x12,  2); App.register_component(kitchen_wr1);
+      auto kitchen_wr2 = new RemoteSwitch(0x12,  3); App.register_component(kitchen_wr2);
+      return {
+        kitchen_dr1, kitchen_dr2, kitchen_dr3, kitchen_wr1, kitchen_wr2,
+      };
+    switches:
+      - id: kitchen_dr1
+        name: "Kitchen Door Relay 1"
+        internal: no
+        inverted: yes
+      - id: kitchen_dr2
+        name: "Kitchen Door Relay 2"
+        internal: no
+        inverted: yes
+      - id: kitchen_dr3
+        name: "Kitchen Door Relay 3"
+        internal: no
+        inverted: yes
+      - id: kitchen_wr1
+        name: "Kitchen Window Relay 1"
+        internal: yes
+        inverted: yes
+      - id: kitchen_wr2
+        name: "Kitchen Window Relay 2"
+        internal: yes
+        inverted: yes
+# Bedroom
+  - platform: custom
+    lambda: |-
+      auto bedroom_dr1 = new RemoteSwitch(0x14,  2); App.register_component(bedroom_dr1);
+      auto bedroom_dr2 = new RemoteSwitch(0x14,  3); App.register_component(bedroom_dr2);
+      auto bedroom_dr3 = new RemoteSwitch(0x14,  4); App.register_component(bedroom_dr3);
+      auto bedroom_wr1 = new RemoteSwitch(0x13,  2); App.register_component(bedroom_wr1);
+      auto bedroom_wr2 = new RemoteSwitch(0x13,  3); App.register_component(bedroom_wr2);
+      return {
+        bedroom_dr1, bedroom_dr2, bedroom_dr3, bedroom_wr1, bedroom_wr2,
+      };
+    switches:
+      - id: bedroom_dr1
+        name: "Bedroom Door Relay 1"
+        internal: no
+        inverted: yes
+      - id: bedroom_dr2
+        name: "Bedroom Door Relay 2"
+        internal: no
+        inverted: yes
+      - id: bedroom_dr3
+        name: "Bedroom Door Relay 3"
+        internal: no
+        inverted: yes
+      - id: bedroom_wr1
+        name: "Bedroom Window Relay 1"
+        internal: yes
+        inverted: yes
+      - id: bedroom_wr2
+        name: "Bedroom Window Relay 2"
+        internal: yes
+        inverted: yes
+# Kidsroom
+  - platform: custom
+    lambda: |-
+      auto kidsroom_dr1 = new RemoteSwitch(0x18,  2); App.register_component(kidsroom_dr1);
+      auto kidsroom_dr2 = new RemoteSwitch(0x18,  3); App.register_component(kidsroom_dr2);
+      auto kidsroom_dr3 = new RemoteSwitch(0x18,  4); App.register_component(kidsroom_dr3);
+      auto kidsroom_wr1 = new RemoteSwitch(0x17,  2); App.register_component(kidsroom_wr1);
+      auto kidsroom_wr2 = new RemoteSwitch(0x17,  3); App.register_component(kidsroom_wr2);
+      return {
+        kidsroom_dr1, kidsroom_dr2, kidsroom_dr3, kidsroom_wr1, kidsroom_wr2,
+      };
+    switches:
+      - id: kidsroom_dr1
+        name: "Kidsroom Door Relay 1"
+        internal: no
+        inverted: yes
+      - id: kidsroom_dr2
+        name: "Kidsroom Door Relay 2"
+        internal: no
+        inverted: yes
+      - id: kidsroom_dr3
+        name: "Kidsroom Door Relay 3"
+        internal: no
+        inverted: yes
+      - id: kidsroom_wr1
+        name: "Kidsroom Window Relay 1"
+        internal: yes
+        inverted: yes
+      - id: kidsroom_wr2
+        name: "Kidsroom Window Relay 2"
+        internal: yes
+        inverted: yes
+# Bathroom
+  - platform: custom
+    lambda: |-
+      auto bathroom_dr1 = new RemoteSwitch(0x19,  2); App.register_component(bathroom_dr1);
+      auto bathroom_dr2 = new RemoteSwitch(0x19,  3); App.register_component(bathroom_dr2);
+      auto bathroom_dr3 = new RemoteSwitch(0x19,  4); App.register_component(bathroom_dr3);
+      return {
+        bathroom_dr1, bathroom_dr2, bathroom_dr3,
+      };
+    switches:
+      - id: bathroom_dr1
+        name: "Bathroom Door Relay 1"
+        internal: no
+        inverted: yes
+      - id: bathroom_dr2
+        name: "Bathroom Door Relay 2"
+        internal: no
+        inverted: yes
+      - id: bathroom_dr3
+        name: "Bathroom Door Relay 3"
+        internal: no
+        inverted: yes
+# Stairway
+  - platform: custom
+    lambda: |-
+      auto stairway_dr1 = new RemoteSwitch(0x1A,  2); App.register_component(stairway_dr1);
+      auto stairway_dr2 = new RemoteSwitch(0x1A,  3); App.register_component(stairway_dr2);
+      auto stairway_dr3 = new RemoteSwitch(0x1A,  4); App.register_component(stairway_dr3);
+      return {
+        stairway_dr1, stairway_dr2, stairway_dr3,
+      };
+    switches:
+      - id: stairway_dr1
+        name: "Stairway Door Relay 1"
+        internal: no
+        inverted: yes
+      - id: stairway_dr2
+        name: "Stairway Door Relay 2"
+        internal: no
+        inverted: yes
+      - id: stairway_dr3
+        name: "Stairway Door Relay 3"
+        internal: no
+        inverted: yes
+
+cover:
+# Living
+  - platform: time_based
+    id: living_ws1
+    name: "Living Window Shade 1"
+    device_class: shade
+    open_action:
+      - switch.turn_off: living_wr2
+      - switch.turn_on: living_wr1
+    open_duration: 30sec
+    close_action:
+      - switch.turn_off: living_wr1
+      - switch.turn_on: living_wr2
+    close_duration: 30sec
+    stop_action:
+      - switch.turn_off: living_wr1
+      - switch.turn_off: living_wr2
+# Kitchen
+  - platform: time_based
+    id: kitchen_ws1
+    name: "Kitchen Window Shade 1"
+    device_class: shade
+    open_action:
+      - switch.turn_off: kitchen_wr2
+      - switch.turn_on: kitchen_wr1
+    open_duration: 30sec
+    close_action:
+      - switch.turn_off: kitchen_wr1
+      - switch.turn_on: kitchen_wr2
+    close_duration: 30sec
+    stop_action:
+      - switch.turn_off: kitchen_wr1
+      - switch.turn_off: kitchen_wr2
+# Bedroom
+  - platform: time_based
+    id: bedroom_ws1
+    name: "Bedroom Window Shade 1"
+    device_class: shade
+    open_action:
+      - switch.turn_off: bedroom_wr2
+      - switch.turn_on: bedroom_wr1
+    open_duration: 30sec
+    close_action:
+      - switch.turn_off: bedroom_wr1
+      - switch.turn_on: bedroom_wr2
+    close_duration: 30sec
+    stop_action:
+      - switch.turn_off: bedroom_wr1
+      - switch.turn_off: bedroom_wr2
+# Kidsroom
+  - platform: time_based
+    id: kidsroom_ws1
+    name: "Kidsroom Window Shade 1"
+    device_class: shade
+    open_action:
+      - switch.turn_off: kidsroom_wr2
+      - switch.turn_on: kidsroom_wr1
+    open_duration: 30sec
+    close_action:
+      - switch.turn_off: kidsroom_wr1
+      - switch.turn_on: kidsroom_wr2
+    close_duration: 30sec
+    stop_action:
+      - switch.turn_off: kidsroom_wr1
+      - switch.turn_off: kidsroom_wr2
+
+script:
+# Bathroom
+  - id: bathroom_fan_auto_off
+    then:
+      - switch.turn_on: bathroom_dr3
+      - delay: 10min
+      - switch.turn_off: bathroom_dr3
+
+

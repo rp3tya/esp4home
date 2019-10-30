@@ -1,0 +1,183 @@
+substitutions:
+  device_id: thermostat
+  device_name: Thermostat
+
+esphome:
+  name: ${device_id}
+  platform: ESP8266
+  board: d1_mini
+#  arduino_version: 2.5.0
+  platformio_options:
+    lib_ldf_mode: deep
+  includes:
+    - display.h
+# Only on first build:
+#    - DigitalDisplay12pt7b.h
+#    - DigitalDisplay24pt7b.h
+#    - DigitalDisplay60pt7b.h
+#    - Ticons12pt7b.h
+  libraries:
+    - "Adafruit GFX Library"
+    - "Adafruit ILI9341"
+    - "XPT2046_Touchscreen"
+  esp8266_restore_from_flash: yes
+  on_loop:
+    then:
+      - lambda: |-
+          auto time = id(sntp_time).now();
+          if (time.is_valid()) {
+            term_time->value() = (100*time.hour + time.minute);
+          }
+
+# Time/zone
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Bucharest
+
+# Configure WiFi
+wifi:
+  networks:
+  - ssid: !secret ssid
+    password: !secret pass
+  fast_connect: no
+  reboot_timeout: 10min
+  power_save_mode: none
+
+# Enable logging
+logger:
+  level: DEBUG
+  esp8266_store_log_strings_in_flash: false
+
+# Enable Home Assistant API
+api:
+  reboot_timeout: 10min
+  services:
+    - service: target_temperature
+      variables:
+        setpoint: float
+      then:
+        - globals.set:
+            id: term_targ
+            value: !lambda 'return setpoint;'
+    - service: target_hold
+      variables:
+        hold: bool
+      then:
+        - globals.set:
+            id: term_prog
+            value: !lambda 'return (hold ? 2 : 0);'
+
+# Enable over-the-air update
+ota:
+
+# Status LED
+status_led:
+  pin:
+    number: D4
+    inverted: True
+
+# Common variables
+globals:
+# Thermostat Operation Mode: HEAT, COOL
+   - id: term_mode
+     type: int
+     restore_value: no
+     initial_value: '0'
+# Thermostat Program Mode: AUTO, MANU, HOLD
+   - id: term_prog
+     type: int
+     restore_value: yes
+     initial_value: '0'
+# Thermostat Target Temperature
+   - id: term_targ
+     type: float
+     restore_value: yes
+     initial_value: '20'
+# Thermostat Current Temperature
+   - id: term_temp
+     type: float
+     restore_value: no
+     initial_value: '0'
+# Thermostat Relay/Flag
+   - id: term_flag
+     type: bool
+     restore_value: no
+     initial_value: '0'
+# Thermostat Current Time
+   - id: term_time
+     type: int
+     restore_value: no
+     initial_value: '0'
+
+# Binary Sensors
+binary_sensor:
+# Hold Mode
+  - platform: template
+    id: ${device_id}_hold
+    name: ${device_name} Hold
+    lambda: |-
+      return term_prog->value() > 1;
+# Relay State
+  - platform: template
+    id: ${device_id}_relay
+    name: ${device_name} Relay
+    lambda: |-
+      return term_flag->value();
+
+# Sensors
+dallas:
+  - pin: D2
+sensor:
+# Temperature
+  - platform: dallas
+    address: 0x7902A19246010628
+    id: ${device_id}_temperature
+    name: ${device_name} Current Temperature
+    on_value:
+      then:
+        - globals.set:
+            id: term_temp
+            value: !lambda "return id(${device_id}_temperature).state;"
+# Target temperature
+  - platform: template
+    id: ${device_id}_target
+    name: ${device_name} Target Temperature
+    lambda: |-
+      if (id(${device_id}_target).state != term_targ->value()) {
+        return term_targ->value();
+      } else {
+        return {};
+      }
+    unit_of_measurement: '°C'
+    update_interval: 1s
+
+# Switches
+switch:
+# Internal GPIO Switch
+  - platform: gpio
+    id: relay
+    pin: D1
+    restore_mode: ALWAYS_OFF
+    internal: yes
+# Controls the relay based on thermostat flag
+  - platform: template
+    id: relay_flag
+    lambda: |-
+      return term_flag->value();
+    on_turn_on:
+      - switch.turn_on: relay
+    on_turn_off:
+      - switch.turn_off: relay
+    internal: yes
+
+# TFT Touch
+spi:
+  clk_pin:  D5
+  mosi_pin: D7
+  miso_pin: D6
+# Display: D0, D8 & D3
+custom_component:
+  - lambda: |-
+      return { new SpiDisplay() };
+
