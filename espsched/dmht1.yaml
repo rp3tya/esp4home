@@ -21,9 +21,9 @@ deep_sleep:
   sleep_duration: 3570s
 
 mqtt:
-  broker: housekeeper
-#  username: DVES_USER
-#  password: DVES_PASS
+  broker: !secret mqtt_broker
+  username: !secret mqtt_user
+  password: !secret mqtt_pass
 
 sensor:
   - platform: adc
