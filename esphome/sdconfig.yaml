@@ -1,0 +1,76 @@
+esphome:
+  name: sdconfig
+  platform: ESP8266
+  board: d1_mini
+  esp8266_restore_from_flash: false
+  includes:
+    - sdconfig.h
+  on_boot:
+    then:
+      - lambda: |-
+          String cfg = loadConfig("flag");
+          ESP_LOGI("config","::: %s", cfg.c_str());
+          if (cfg.indexOf("flag=true") == 0) {
+            ESP_LOGI("config"," first line is 'true'");
+            id(flag) = true;
+          } else {
+            ESP_LOGI("config"," first line is NOT 'true'");
+            id(flag) = false;
+          }
+
+wifi:
+  ssid: !secret ssid
+  password: !secret pass
+
+logger:
+  esp8266_store_log_strings_in_flash: false
+
+ota:
+api:
+#web_server:
+
+globals:
+  - id: flag
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+sensor:
+  - platform: adc
+    pin: A0
+    name: 'Analog Input'
+    update_interval: 10s
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: D0
+      mode: INPUT_PULLUP
+    name: 'Digital Input'
+    on_press:
+      then:
+        switch.toggle: restore_switch
+
+switch:
+  - platform: template
+    id: restore_switch
+    name: "Restore Switch"
+    lambda: 'return id(flag);'
+    turn_on_action:
+        - lambda: 'id(flag) = true;'
+        - lambda: 'saveConfig(id(flag) ? "flag=true" : "flag=false");'
+        - lambda: 'ESP_LOGI("config","::: %s", loadConfig("flag").c_str());'
+    turn_off_action:
+        - lambda: 'id(flag) = false;'
+        - lambda: 'saveConfig(id(flag) ? "flag=true" : "flag=false");'
+        - lambda: 'ESP_LOGI("config","::: %s", loadConfig("flag").c_str());'
+
+
+interval:
+  - interval: 10s
+    then:
+      - logger.log:
+          format: "Flag is %d"
+          args: [ 'id(restore_switch).state' ]
+
+
