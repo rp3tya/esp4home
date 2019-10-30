@@ -1,0 +1,33 @@
+esphome:
+  name: pir
+  platform: ESP8266
+  board: d1_mini
+
+wifi:
+  ssid: !secret ssid 
+  password: !secret pass
+  fast_connect: True
+  reboot_timeout: 10min
+
+logger:
+  level: INFO
+
+api:
+  password: !secret api_pass
+  reboot_timeout: 10min
+
+ota:
+
+#############################
+
+status_led:
+  pin:
+    number: GPIO2
+    inverted: True
+
+binary_sensor:
+  - platform: gpio
+    pin: D3
+    name: "PIR Sensor"
+    device_class: motion
+

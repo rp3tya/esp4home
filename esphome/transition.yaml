@@ -1,0 +1,32 @@
+esphome:
+  name: transition
+  platform: ESP8266
+  board: d1_mini
+
+logger:
+
+ota:
+
+wifi:
+  ssid: !secret ssid 
+  password: !secret pass
+
+api:
+  services:
+    - service: set_light_transition_length
+      variables:
+        transition: int
+      then:
+        - lambda: 'id(kitchen_lights).set_default_transition_length(transition * 1000);'
+
+output:
+  - platform: esp8266_pwm
+    id: output_component1
+    pin: D1
+
+light:
+  - platform: monochromatic
+    id: kitchen_lights
+    name: "Kitchen Lights"
+    output: output_component1
+

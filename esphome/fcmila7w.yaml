@@ -1,0 +1,68 @@
+esphome:
+  name: fcmila7w
+  platform: ESP8266
+  board: esp12e
+
+wifi:
+  ssid: !secret ssid
+  password: !secret pass
+
+logger:
+  level: debug
+
+api:
+  port: 6053
+
+ota:
+  port: 8266
+
+web_server:
+  port: 80
+
+output:
+  - platform: esp8266_pwm
+    pin: GPIO4
+    id: pwm_white
+  - platform: esp8266_pwm
+    pin: GPIO12
+    id: pwm_green
+  - platform: esp8266_pwm
+    pin: GPIO13
+    id: pwm_blue
+  - platform: esp8266_pwm
+    pin: GPIO14
+    id: pwm_red
+
+light:
+  - platform: rgbw
+    id: fcmila_7w
+    name: "FCMILA 7W"
+    green: pwm_green
+    blue: pwm_blue
+    red: pwm_red
+    white: pwm_white
+    restore_mode: ALWAYS_ON
+    effects:
+    - random:
+    - strobe:
+    - flicker:
+    - automation:
+        name: Police
+        sequence:
+          - light.turn_on:
+              id: fcmila_7w
+              white: 0%
+              brightness: 100%
+              red: 100%
+              green: 0%
+              blue: 0%
+          - delay: 1000ms
+          - light.turn_on:
+              id: fcmila_7w
+              white: 0%
+              brightness: 100%
+              red: 0%
+              green: 0%
+              blue: 100%
+          - delay: 1000ms
+

@@ -1,0 +1,194 @@
+esphome:
+  name: uartmega
+  platform: ESP8266
+  board: nodemcu
+  includes:
+    - uartmega.h
+  libraries:
+    - SoftwareSerial
+    - ArduinoJson
+
+wifi:
+  ssid: !secret ssid 
+  password: !secret pass
+  reboot_timeout: 0s
+
+logger:
+  level: DEBUG
+  esp8266_store_log_strings_in_flash: False
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+status_led:
+  pin: 
+    number: GPIO16
+    inverted: yes
+
+binary_sensor:
+  - platform: custom
+    lambda: |-
+      auto a1t8 = new RemoteSensor(0x11, 8); App.register_component(a1t8);
+      auto a1t9 = new RemoteSensor(0x11, 9); App.register_component(a1t9);
+      auto a2b3 = new RemoteSensor(0x12, 3); App.register_component(a2b3);
+      auto a4b3 = new RemoteSensor(0x14, 3); App.register_component(a4b3);
+      auto a5b3 = new RemoteSensor(0x15, 3); App.register_component(a5b3);
+      auto a6t7 = new RemoteSensor(0x16, 7); App.register_component(a6t7);
+      auto a6t8 = new RemoteSensor(0x16, 8); App.register_component(a6t8);
+      auto a6t9 = new RemoteSensor(0x16, 9); App.register_component(a6t9);
+      auto a6t10 = new RemoteSensor(0x16, 10); App.register_component(a6t10);
+      auto a6t11 = new RemoteSensor(0x16, 11); App.register_component(a6t11);
+      auto a6t12 = new RemoteSensor(0x16, 12); App.register_component(a6t12);
+      return {
+        a1t8,
+        a1t9,
+        a2b3,
+        a4b3,
+        a5b3,
+        a6t7,
+        a6t8,
+        a6t9,
+        a6t10,
+        a6t11,
+        a6t12,
+      };
+    binary_sensors:
+      - id: a1t8
+        name: "ATMega1 Touch8"
+        on_press:
+          then:
+            - switch.turn_on: a1l2
+            - switch.turn_on: a3l2
+            - switch.turn_on: a1l13
+            - switch.turn_on: a2l13
+            - switch.turn_on: a3l13
+            - switch.turn_on: a4l13
+            - switch.turn_on: a5l13
+            - switch.turn_on: a6l13
+            - switch.turn_on: a5r14
+      - id: a1t9
+        name: "ATMega1 Touch9"
+        on_press:
+          then:
+            - switch.turn_off: a1l2
+            - switch.turn_off: a3l2
+            - switch.turn_off: a1l13
+            - switch.turn_off: a2l13
+            - switch.turn_off: a3l13
+            - switch.turn_off: a4l13
+            - switch.turn_off: a5l13
+            - switch.turn_off: a6l13
+            - switch.turn_off: a5r14
+      - id: a2b3
+        name: "ATMega2 Button3"
+        on_press:
+          then:
+            - switch.toggle: a1l2
+            - switch.toggle: a3l2
+      - id: a4b3
+        name: "ATMega4 Button3"
+        on_press:
+          then:
+            - switch.toggle: a4l13
+            - switch.toggle: a6l13
+      - id: a5b3
+        name: "ATMega5 Button3"
+        on_press:
+          then:
+            - switch.toggle: a5r14
+            - switch.toggle: a5l13
+      - id: a6t7
+        name: "ATMega6 Touch7"
+        on_press:
+          then:
+            - switch.turn_on: a1l13
+        on_release:
+          then:
+            - switch.turn_off: a1l13
+      - id: a6t8
+        name: "ATMega6 Touch8"
+        on_press:
+          then:
+            - switch.turn_on: a2l13
+        on_release:
+          then:
+            - switch.turn_off: a2l13
+      - id: a6t9
+        name: "ATMega6 Touch9"
+        on_press:
+          then:
+            - switch.turn_on: a3l13
+        on_release:
+          then:
+            - switch.turn_off: a3l13
+      - id: a6t10
+        name: "ATMega6 Touch10"
+        on_press:
+          then:
+            - switch.turn_on: a4l13
+        on_release:
+          then:
+            - switch.turn_off: a4l13
+      - id: a6t11
+        name: "ATMega6 Touch11"
+        on_press:
+          then:
+            - switch.turn_on: a5l13
+        on_release:
+          then:
+            - switch.turn_off: a5l13
+      - id: a6t12
+        name: "ATMega6 Touch12"
+        on_press:
+          then:
+            - switch.turn_on: a6l13
+        on_release:
+          then:
+            - switch.turn_off: a6l13
+
+switch:
+  - platform: custom
+    lambda: |-
+      auto a1l2 = new RemoteSwitch(0x11, 2); App.register_component(a1l2);
+      auto a1l13 = new RemoteSwitch(0x11, 13); App.register_component(a1l13);
+      auto a2l13 = new RemoteSwitch(0x12, 13); App.register_component(a2l13);
+      auto a3l2 = new RemoteSwitch(0x13, 2); App.register_component(a3l2);
+      auto a3l13 = new RemoteSwitch(0x13, 13); App.register_component(a3l13);
+      auto a4l13 = new RemoteSwitch(0x14, 13); App.register_component(a4l13);
+      auto a5l13 = new RemoteSwitch(0x15, 13); App.register_component(a5l13);
+      auto a5r14 = new RemoteSwitch(0x15, 14); App.register_component(a5r14);
+      auto a6l13 = new RemoteSwitch(0x16, 13); App.register_component(a6l13);
+      return {
+        a1l2,
+        a1l13,
+        a2l13,
+        a3l2,
+        a3l13,
+        a4l13,
+        a5l13,
+        a5r14,
+        a6l13,
+      };
+    switches:
+      - id: a1l2
+        name: "ATMega1 Led2"
+      - id: a1l13
+        name: "ATMega1 Led13"
+      - id: a2l13
+        name: "ATMega2 Led13"
+      - id: a3l2
+        name: "ATMega3 Led2"
+      - id: a3l13
+        name: "ATMega3 Led13"
+      - id: a4l13
+        name: "ATMega4 Led13"
+      - id: a5l13
+        name: "ATMega5 Led13"
+      - id: a5r14
+        name: "ATMega5 Relay14"
+      - id: a6l13
+        name: "ATMega6 Led13"
+
+

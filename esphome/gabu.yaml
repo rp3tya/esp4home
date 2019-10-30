@@ -1,0 +1,159 @@
+esphome:
+  name: gabu
+  platform: ESP8266
+  board: d1_mini
+  includes:
+  - db103ac.h
+  - ah3503.h
+
+logger:
+  level: DEBUG
+  esp8266_store_log_strings_in_flash: False
+
+wifi:
+  networks:
+  - ssid: !secret ssid
+    password: !secret pass
+  power_save_mode: none
+  fast_connect: no
+
+api:
+  password: !secret api_pass
+  services:
+  - service: open_gate
+    then:
+    - script.execute: relay_onoff
+
+ota:
+  port: 8266
+
+#############################
+
+status_led:
+  pin:
+    number: GPIO2
+    inverted: True
+
+globals:
+- id: baseline
+  type: int
+  restore_value: yes
+  initial_value: '542'
+- id: threshold
+  type: int
+  restore_value: yes
+  initial_value: '28'
+
+remote_receiver:
+  pin: D7
+  dump: rc_switch
+  tolerance: 25%
+  buffer_size: 1kb
+  filter: 10us
+  idle: 5ms
+
+switch:
+- platform: template
+  id: gate_baseline_calibration
+  name: Gate Baseline Calibration
+  assumed_state: true
+  turn_on_action:
+  - lambda: |-
+      id(baseline) += 1;
+  turn_off_action:
+  - lambda: |-
+      id(baseline) -= 1;
+
+- platform: template
+  id: gate_thershold_calibration
+  name: Gate Treshold Calibration
+  assumed_state: true
+  turn_on_action:
+  - lambda: |-
+      id(threshold) += 1;
+  turn_off_action:
+  - lambda: |-
+      id(threshold) -= 1;
+
+- platform: gpio
+  id: relay
+  pin: D1
+  name: "Relay"
+
+binary_sensor:
+- platform: gpio
+  id: gate_button
+  name: Gate Button
+  pin: 
+    number: D0
+    mode: INPUT_PULLDOWN_16
+  filters:
+  - delayed_on: 100ms
+  - delayed_off: 1000ms
+
+- platform: remote_receiver
+  id: elro_db270_doorbell
+  name: "Elro DB270 Doorbell"
+  rc_switch_raw:
+    code: !secret code_db270
+    protocol: 1
+  filters:
+  - delayed_off: 1000ms
+  on_press:
+    then:
+    - script.execute: relay_onoff
+
+- platform: remote_receiver
+  id: k_classic_doorbell
+  name: "K-Classic Doorbell"
+  rc_switch_raw:
+    code: !secret code_kclassic
+    protocol: 1
+  filters:
+  - delayed_off: 1000ms
+  on_press:
+    then:
+    - script.execute: relay_onoff
+
+- platform: custom
+  lambda: |-
+    auto db103ac_sensor = new DB103ACBinarySensor();
+    auto hall_sensor = new AH3503BinarySensor();
+    App.register_component(db103ac_sensor);
+    App.register_component(hall_sensor);
+    return { db103ac_sensor, hall_sensor };
+  binary_sensors:
+  - id: home_db103ac_doorbell
+    name: "Home DB103AC Doorbell"
+    filters:
+    - delayed_off: 1s
+  - id: gate_open
+    name: "Gate Open"
+    filters:
+    - delayed_on: 500ms
+    - delayed_off: 5000ms
+
+sensor:
+- platform: template
+  id: gate_baseline
+  name: "Gate Baseline"
+  lambda: |-
+    return id(baseline);
+  filters:
+  - throttle: 1s
+
+- platform: template
+  id: gate_threshold
+  name: "Gate Threshold"
+  lambda: |-
+    return id(threshold);
+  filters:
+  - throttle: 1s
+
+script:
+- id: relay_onoff
+  then:
+  - switch.turn_on: relay
+  - delay: 900ms
+  - switch.turn_off: relay
+

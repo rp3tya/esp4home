@@ -1,0 +1,25 @@
+esphome:
+  name: sniffer
+  platform: ESP8266
+  board: d1_mini
+
+wifi:
+  ssid: !secret ssid 
+  password: !secret pass
+
+logger:
+  level: DEBUG
+
+ota:
+
+remote_receiver:
+  pin: D2
+#  dump: rc_switch
+  filter: 100us
+
+binary_sensor:
+  - platform: remote_receiver
+    name: 'Test'
+    rc_switch_raw:
+      protocol: 1
+      code: '0101010101010101'
