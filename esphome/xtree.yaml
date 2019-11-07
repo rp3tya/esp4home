@@ -1,0 +1,37 @@
+esphome:
+  name: xtree
+  platform: ESP8266
+  board: d1_mini
+
+wifi:
+#  networks:
+#    ssid: !secret ssid
+#    password: !secret pass
+  ap:
+    ssid: !secret ap_ssid
+    password: !secret ap_pass
+#  use_address: 192.168.4.1
+captive_portal:
+
+logger:
+ota:
+web_server:
+
+api:
+#  services:
+#  - service: click1
+#    then:
+#      - switch.turn_on: io2
+
+switch:
+- platform: gpio
+  pin:
+    number: 2
+    inverted: yes
+  id: io2
+  name: "X-mas Tree"
+  icon: "mdi:pine-tree"
+  on_turn_on:
+  - delay: 100ms
+  - switch.turn_off: io2
+
