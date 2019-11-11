@@ -45,23 +45,30 @@ ICACHE_RAM_ATTR void handler() {
 /**
  * Sensor
  */
-class HCKK04Sensor : public Component, public Sensor {
+class HCKK04Sensor : public Component {
  public:
+  int sid = 0;
+  Sensor *temperature_sensor = new Sensor();
+  Sensor *humidity_sensor = new Sensor();
+  HCKK04Sensor(int sensor_id) : Component() {
+    sid = sensor_id;
+  }
   void setup() override {
     pinMode(RX_PIN, INPUT);
     attachInterrupt(digitalPinToInterrupt(RX_PIN), handler, CHANGE);
   }
   void loop() override {
     if (pack > 0) {
-      publish_state((pack >> 12 & 0xFFF)/10.0);
-//    uint32 id = pack >> 28 & 0xFF;
-//    uint32 fl = pack >> 24 & 0xF;
-//    uint32 tm = pack >> 12 & 0xFFF;
-//    uint32 cs = pack >> 8 & 0xF;
-//    uint32 hm = pack >> 0 & 0xFF;
-      pack = 0;
+      uint32 id = pack >> 28 & 0xFF;
+      uint32 fl = pack >> 24 & 0xF;
+      uint32 tm = pack >> 12 & 0xFFF;
+      uint32 cs = pack >> 8 & 0xF;
+      uint32 hm = pack >> 0 & 0xFF;
+      if (sid == id) {
+        temperature_sensor->publish_state(tm/10.0);
+        humidity_sensor->publish_state(hm);
+        pack = 0;
+      }
     }
   }
 };
-
-

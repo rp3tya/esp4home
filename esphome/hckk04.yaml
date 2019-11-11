@@ -31,10 +31,22 @@ status_led:
 sensor:
 - platform: custom
   lambda: |-
-    auto hckk04_sensor = new HCKK04Sensor();
-    App.register_component(hckk04_sensor);
-    return { hckk04_sensor };
+    auto hckk04 = new HCKK04Sensor(112);
+    App.register_component(hckk04);
+    return { 
+      hckk04->temperature_sensor,
+      hckk04->humidity_sensor
+    };
   sensors:
-  - id: home_hckk04
-    name: "Home HCKK04"
-
+  - id: home_hckk04_tmp
+    name: "Home HCKK04 Temperature"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum
+    name: "Home HCKK04 Humidity"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
