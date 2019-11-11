@@ -1,0 +1,40 @@
+esphome:
+  name: hckk04
+  platform: ESP8266
+  board: d1_mini
+  includes:
+  - hckk04.h
+
+logger:
+  level: DEBUG
+  esp8266_store_log_strings_in_flash: False
+
+wifi:
+  networks:
+  - ssid: !secret ssid
+    password: !secret pass
+  power_save_mode: none
+  fast_connect: no
+
+api:
+
+ota:
+  port: 8266
+
+#############################
+
+status_led:
+  pin:
+    number: GPIO2
+    inverted: True
+
+sensor:
+- platform: custom
+  lambda: |-
+    auto hckk04_sensor = new HCKK04Sensor();
+    App.register_component(hckk04_sensor);
+    return { hckk04_sensor };
+  sensors:
+  - id: home_hckk04
+    name: "Home HCKK04"
+
