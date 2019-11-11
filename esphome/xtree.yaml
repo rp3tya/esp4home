@@ -35,3 +35,9 @@ switch:
   - delay: 100ms
   - switch.turn_off: io2
 
+binary_sensor:
+- platform: gpio
+  pin:
+    number: 15
+    inverted: yes
+  name: "X-mas Button"
