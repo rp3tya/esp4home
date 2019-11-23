@@ -18,10 +18,15 @@ ota:
 web_server:
 
 api:
-#  services:
-#  - service: click1
-#    then:
-#      - switch.turn_on: io2
+  services:
+  - service: click
+    then:
+    - script.stop: click1
+    - script.execute: click1
+  - service: clicks
+    then:
+    - script.stop: click8
+    - script.execute: click8
 
 switch:
 - platform: gpio
@@ -29,10 +34,13 @@ switch:
     number: 2
     inverted: yes
   id: io2
+- platform: template
+  id: x_mas_tree
   name: "X-mas Tree"
   icon: "mdi:pine-tree"
-  on_turn_on:
-  - delay: 100ms
+  turn_on_action:
+  - switch.turn_on: io2
+  - delay: 500ms
   - switch.turn_off: io2
 
 binary_sensor:
@@ -41,3 +49,26 @@ binary_sensor:
     number: 15
     inverted: yes
   name: "X-mas Button"
+
+script:
+- id: click1
+  then:
+    - switch.turn_on: x_mas_tree
+- id: click8
+  then:
+    - switch.turn_on: x_mas_tree
+    - delay: 1s
+    - switch.turn_on: x_mas_tree
+    - delay: 1s
+    - switch.turn_on: x_mas_tree
+    - delay: 1s
+    - switch.turn_on: x_mas_tree
+    - delay: 1s
+    - switch.turn_on: x_mas_tree
+    - delay: 1s
+    - switch.turn_on: x_mas_tree
+    - delay: 1s
+    - switch.turn_on: x_mas_tree
+    - delay: 1s
+    - switch.turn_on: x_mas_tree
+
