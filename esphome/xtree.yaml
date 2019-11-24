@@ -4,13 +4,12 @@ esphome:
   board: d1_mini
 
 wifi:
-#  networks:
-#    ssid: !secret ssid
-#    password: !secret pass
+  networks:
+    ssid: !secret ssid
+    password: !secret pass
   ap:
     ssid: !secret ap_ssid
     password: !secret ap_pass
-#  use_address: 192.168.4.1
 captive_portal:
 
 logger:
@@ -19,14 +18,48 @@ web_server:
 
 api:
   services:
-  - service: click
+  - service: select
+    variables:
+      function: int
     then:
-    - script.stop: click1
-    - script.execute: click1
-  - service: clicks
+    - lambda: 'id(target_function) = (function >= 0 && function <= 8) ? function : 1;'
+    - lambda: 'id(manual_function) = false;'
+
+globals:
+- id: current_function
+  type: int
+  restore_value: no
+  initial_value: '0'
+- id: target_function
+  type: int
+  restore_value: no
+  initial_value: '0'
+- id: manual_function
+  type: bool
+  restore_value: no
+  initial_value: 'true'
+
+interval:
+- interval: 1s
+  then:
+  - if:
+      condition:
+        lambda: 'return id(current_function) != id(target_function);'
+      then:
+        switch.turn_on: x_tree_switch
+      else:
+        lambda: 'id(manual_function) = true;'
+
+binary_sensor:
+- platform: gpio
+  pin:
+    number: 13
+    inverted: yes
+  id: x_tree_button
+  on_press:
     then:
-    - script.stop: click8
-    - script.execute: click8
+    - lambda: 'id(current_function) = (id(current_function) >= 8) ? 0 : 1+id(current_function);'
+    - lambda: 'if (id(manual_function)) id(target_function) = id(current_function);'
 
 switch:
 - platform: gpio
@@ -35,40 +68,74 @@ switch:
     inverted: yes
   id: io2
 - platform: template
-  id: x_mas_tree
-  name: "X-mas Tree"
-  icon: "mdi:pine-tree"
+  id: x_tree_switch
+  name: "X-Tree Switch"
   turn_on_action:
   - switch.turn_on: io2
   - delay: 500ms
   - switch.turn_off: io2
 
-binary_sensor:
-- platform: gpio
-  pin:
-    number: 15
-    inverted: yes
-  name: "X-mas Button"
-
-script:
-- id: click1
-  then:
-    - switch.turn_on: x_mas_tree
-- id: click8
-  then:
-    - switch.turn_on: x_mas_tree
-    - delay: 1s
-    - switch.turn_on: x_mas_tree
-    - delay: 1s
-    - switch.turn_on: x_mas_tree
-    - delay: 1s
-    - switch.turn_on: x_mas_tree
-    - delay: 1s
-    - switch.turn_on: x_mas_tree
-    - delay: 1s
-    - switch.turn_on: x_mas_tree
-    - delay: 1s
-    - switch.turn_on: x_mas_tree
-    - delay: 1s
-    - switch.turn_on: x_mas_tree
+- platform: template
+  name: "X-Tree Off"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 0 || id(target_function) == 0;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 0;'
+    - lambda: 'id(manual_function) = false;'
+- platform: template
+  name: "X-Tree Function 1"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 1 || id(target_function) == 1;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 1;'
+    - lambda: 'id(manual_function) = false;'
+- platform: template
+  name: "X-Tree Function 2"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 2 || id(target_function) == 2;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 2;'
+    - lambda: 'id(manual_function) = false;'
+- platform: template
+  name: "X-Tree Function 3"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 3 || id(target_function) == 3;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 3;'
+    - lambda: 'id(manual_function) = false;'
+- platform: template
+  name: "X-Tree Function 4"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 4 || id(target_function) == 4;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 4;'
+    - lambda: 'id(manual_function) = false;'
+- platform: template
+  name: "X-Tree Function 5"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 5 || id(target_function) == 5;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 5;'
+    - lambda: 'id(manual_function) = false;'
+- platform: template
+  name: "X-Tree Function 6"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 6 || id(target_function) == 6;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 6;'
+    - lambda: 'id(manual_function) = false;'
+- platform: template
+  name: "X-Tree Function 7"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 7 || id(target_function) == 7;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 7;'
+    - lambda: 'id(manual_function) = false;'
+- platform: template
+  name: "X-Tree Function 8"
+  icon: 'mdi:pine-tree'
+  lambda: 'return id(current_function) == 8 || id(target_function) == 8;'
+  turn_on_action:
+    - lambda: 'id(target_function) = 8;'
+    - lambda: 'id(manual_function) = false;'
 
