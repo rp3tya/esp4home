@@ -28,7 +28,7 @@ rx_off: <012345>
 ## getting the ON/OFF codes
 Initially I used [rtl_433](https://github.com/merbanan/rtl_433) with a DVB [dongle](https://www.rtl-sdr.com/product/rtl-sdr-blog-v3-r820t2-rtl2832u-1ppm-tcxo-sma-software-defined-radio-dongle-only/) to read the signal (see [here](https://github.com/merbanan/rtl_433_tests/tree/master/tests/euroster/3000tx/01) more protocol details).
 
-![Euroster TX in RTL](https://github.com/rp3tya/esp4home/esphome/euroster3000tx.rtl.png)
+![Euroster TX in RTL](https://github.com/rp3tya/esp4home/raw/master/esphome/euroster3000tx.rtl.png)
 
 To find TX ON/OFF message codes, run rtl_433 with `$ rtl_433 -R 0 -X "n=Euroster_3000TX,m=OOK_MC_ZEROBIT,s=1000,r=4800,bits=32"`. Note the number displayed as `data` and the heating status on your thermostat. Now, modify the target temperature on the unit to change the heating status. Wait for approximately a minute and when the next message is displayed, it should contain a different `data` value. These are the ON/OFF codes of your unit. If you live in a crowded area make sure you did not record some neighbour's codes, for example by removing the batteries (no messages should be detected by rtl_433 for at least a minute).
 
@@ -60,6 +60,7 @@ input_select:
     icon: mdi:thermometer
     options: ["16","17","18","19","20","21","22","23","24"]
 ```
+![Daily schedule in Home Assistant](https://github.com/rp3tya/esp4home/raw/master/esphome/euroster3000tx.schedule.png)
 
 ## to be done
 In case of power outage or restart the ESP needs to get current time from a server, otherwise it will not follow the schedule. Without knowing the time, it will keep the last target temperature until a time source can be contacted.
