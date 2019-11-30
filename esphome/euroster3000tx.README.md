@@ -21,6 +21,7 @@ To build the hardware, you will need:
 To build the software, you will need:
 - ESPHome
 - Home Assistant
+
 Once the device is flashed and discovered in Home Assistant, it must be configured. In Developer Tools, Services look for the `esphome.euroster3000tx_configure_tx` service and call it with the following parameters:
 ```
 rx_on: <123456>
@@ -32,7 +33,11 @@ Initially I used [rtl_433](https://github.com/merbanan/rtl_433) with a DVB [dong
 
 ![Euroster TX in RTL](https://github.com/rp3tya/esp4home/raw/master/esphome/euroster3000tx.rtl.png)
 
-To find TX ON/OFF message codes, run rtl_433 with `$ rtl_433 -R 0 -X "n=Euroster_3000TX,m=OOK_MC_ZEROBIT,s=1000,r=4800,bits=32"`. Note the number displayed as `data` and the heating status on your thermostat. Now, modify the target temperature on the unit to change the heating status. Wait for approximately a minute and when the next message is displayed, it should contain a different `data` value. These are the ON/OFF codes of your unit. If you live in a crowded area make sure you did not record some neighbour's codes, for example by removing the batteries (no messages should be detected by rtl_433 for at least a minute).
+To find TX ON/OFF message codes, run rtl_433 with
+
+```$ rtl_433 -R 0 -X "n=Euroster_3000TX,m=OOK_MC_ZEROBIT,s=1000,r=4800,bits=32"```
+
+Note the number displayed as `data` and the heating status on your thermostat. Now, modify the target temperature on the unit to change the heating status. Wait for approximately a minute and when the next message is displayed, it should contain a different `data` value. These are the ON/OFF codes of your unit. If you live in a crowded area make sure you did not record some neighbour's codes, for example by removing the batteries (no messages should be detected by rtl_433 for at least a minute).
 
 ## daily schedule
 Use the `esphome.euroster3000tx_configure_schedule` service to change the default schedule. Parameters:
