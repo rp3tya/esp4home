@@ -1,5 +1,7 @@
-#euroster3000tx
+# euroster3000tx
+
 This node replaces the TX part of a [Euroster 3000TXRX](https://www.euroster.pl/en/produkty/room-thermostats/programmable/euroster-3000txrx/269) room thermostat. It should work with other wireless models that use the same RX unit.
+
 These thermostats have an RX part with a dry contact relay that is connected to the central heating boiler (or electrical heating appliance) and a TX part with built-in temperature sensor and screen/buttons for setup. The two components communicate via 433MHz signals: TX sends an ON or OFF message regularly, while RX switches the relay accordingly.
 
 ## requirements
@@ -64,6 +66,7 @@ input_select:
 
 ## to be done
 In case of power outage or restart the ESP needs to get current time from a server, otherwise it will not follow the schedule. Without knowing the time, it will keep the last target temperature until a time source can be contacted.
+
 I am planning to add a 433MHz receiver to support multiple external temperature sensors (as in [hckk04](https://github.com/rp3tya/esp4home/blob/master/esphome/hckk04.README.md))
 
 
