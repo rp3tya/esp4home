@@ -29,9 +29,7 @@ rx_off: <OFF code>
 ```
 
 ## getting the ON/OFF codes
-Initially I used [rtl_433](https://github.com/merbanan/rtl_433) with a DVB [dongle](https://www.rtl-sdr.com/product/rtl-sdr-blog-v3-r820t2-rtl2832u-1ppm-tcxo-sma-software-defined-radio-dongle-only/) to read the signal (see [here](https://github.com/merbanan/rtl_433_tests/tree/master/tests/euroster/3000tx/01) more protocol details).
-
-To find your TX ON/OFF message codes, run rtl_433 with
+Initially I used [rtl_433](https://github.com/merbanan/rtl_433) with a DVB [dongle](https://www.rtl-sdr.com/product/rtl-sdr-blog-v3-r820t2-rtl2832u-1ppm-tcxo-sma-software-defined-radio-dongle-only/) to read the signal (see [here](https://github.com/merbanan/rtl_433_tests/tree/master/tests/euroster/3000tx/01) more protocol details). To find your TX ON/OFF message codes, run rtl_433 with
 
 ```$ rtl_433 -R 0 -X "n=Euroster_3000TX,m=OOK_MC_ZEROBIT,s=1000,r=4800,bits=32"```
 
@@ -72,6 +70,24 @@ input_select:
 Currently there are four set of values configured in `euroster3000tx.yaml`, but more can be added if necessary. Naturally each set needs corresponding entities in Home Assistant if you want to change the schedule from the user interface (otherwise this is optional).
 
 ![Daily schedule in Home Assistant](https://github.com/rp3tya/esp4home/raw/master/esphome/euroster3000tx.schedule.png)
+
+After you change the schedule in Home Assistant it must be sent to the device, for example with a script:
+
+```
+transfer_schedule:
+  alias: Transfer Schedule
+  sequence:
+    - service: esphome.euroster3000tx_configure_schedule
+      data_template:
+        weekday1: '{{ states.input_select.hour_wd1.state + states.input_select.minute_wd1.state + states.input_select.target_wd1.state }}'
+        weekday2: '{{ states.input_select.hour_wd2.state + states.input_select.minute_wd2.state + states.input_select.target_wd2.state }}'
+        weekday3: '{{ states.input_select.hour_wd3.state + states.input_select.minute_wd3.state + states.input_select.target_wd3.state }}'
+        weekday4: '{{ states.input_select.hour_wd4.state + states.input_select.minute_wd4.state + states.input_select.target_wd4.state }}'
+        weekend1: '{{ states.input_select.hour_we1.state + states.input_select.minute_we1.state + states.input_select.target_we1.state }}'
+        weekend2: '{{ states.input_select.hour_we2.state + states.input_select.minute_we2.state + states.input_select.target_we2.state }}'
+        weekend3: '{{ states.input_select.hour_we3.state + states.input_select.minute_we3.state + states.input_select.target_we3.state }}'
+        weekend4: '{{ states.input_select.hour_we4.state + states.input_select.minute_we4.state + states.input_select.target_we4.state }}'
+```
 
 ## to be done
 In case of power outage or restart the ESP needs to get current time from a server, otherwise it will not follow the schedule. Without knowing the time, it will keep the last target temperature until a time source can be contacted.
