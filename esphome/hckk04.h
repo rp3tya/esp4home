@@ -64,11 +64,14 @@ class HCKK04Sensor : public Component {
       uint32 tm = pack >> 12 & 0xFFF;
       uint32 cs = pack >> 8 & 0xF;
       uint32 hm = pack >> 0 & 0xFF;
+      pack = 0;
+
       if (sid == id) {
         temperature_sensor->publish_state(tm/10.0);
         humidity_sensor->publish_state(hm);
-        pack = 0;
       }
+
+      ESP_LOGI("main", "House Code: %d   Temperature: %.1f   Humidity: %d", id, tm/10.0, hm);
     }
   }
 };
