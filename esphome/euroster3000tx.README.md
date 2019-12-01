@@ -17,6 +17,8 @@ To build the hardware, you will need:
 - temperature sensor - there is an AM2302 in this configuration, but can be any sensor (even [wireless](https://github.com/rp3tya/esp4home/blob/master/esphome/hckk04.README.md))
 - 433MHz transmitter - for example STX882
 
+![Assembled](https://github.com/rp3tya/esp4home/raw/master/esphome/euroster3000tx.jpg)
+
 ## software
 To build the software, you will need:
 - ESPHome
