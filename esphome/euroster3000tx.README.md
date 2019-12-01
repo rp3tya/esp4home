@@ -95,9 +95,9 @@ transfer_schedule:
 
 ## to be done
 
-The climate entity should not be set manually because on-board automations will reset the target temperature according to schedule. This is a side-effect of making the schedule configurable, `on_time` does not accept variables.
+The climate entity should not be set manually because on-board automations will reset the target temperature according to schedule. This is a side-effect of making the schedule configurable on the fly, as `on_time` is not templatable.
 
-In case of power outage or restart the ESP needs to get current time from a server, otherwise it will not follow the schedule. Without knowing the time, it will keep the last target temperature until an NTP server or Home Assistant can be contacted.
+In case of power outage or restart the ESP needs to get current time from a server, otherwise it can not follow the schedule. Without valid time, it will keep the last target temperature until an NTP server or Home Assistant can be contacted. A custom time component would probably overcome this limitation.
 
 I am planning to add a 433MHz receiver to support multiple external temperature sensors (as in [hckk04](https://github.com/rp3tya/esp4home/blob/master/esphome/hckk04.README.md))
 
