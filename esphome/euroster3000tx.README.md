@@ -37,7 +37,9 @@ Initially I used [rtl_433](https://github.com/merbanan/rtl_433) with a DVB [dong
 
 ![Euroster TX in RTL](https://github.com/rp3tya/esp4home/raw/master/esphome/euroster3000tx.rtl.png)
 
-Note the number displayed as `data` and the heating status on your thermostat. Now, modify the target temperature on the unit to toggle the heating. Wait for approximately a minute and when the next message is displayed, it should give a different `data` value. These are the ON/OFF codes of your unit. If you live in a crowded area make sure you did not record some neighbour's codes, for example by removing the batteries (no messages should be detected by rtl_433 for at least a minute). Do not replace the batteries in the thermostat from this point as it will interfere with the new controller!
+Note the number displayed as `data` and the heating status on your thermostat. Now, modify the target temperature on the unit to toggle the heating. Wait for approximately a minute and when the next message is displayed, it should give a different `data` value. These are the ON/OFF codes of your unit. If you live in a crowded area make sure you did not record some neighbour's codes, for example remove the batteries (no messages should be detected by rtl_433 for at least a minute). Do not replace the batteries in the thermostat from this point as it will interfere with the new controller!
+
+Concerned about security? You are right!
 
 ## daily schedule
 Use the `esphome.euroster3000tx_configure_schedule` service to change the default schedule. Parameters:
@@ -92,7 +94,10 @@ transfer_schedule:
 ```
 
 ## to be done
-In case of power outage or restart the ESP needs to get current time from a server, otherwise it will not follow the schedule. Without knowing the time, it will keep the last target temperature until a time source can be contacted.
+
+The climate entity should not be set manually because on-board automations will reset the target temperature according to schedule. This is a side-effect of making the schedule configurable, `on_time` does not accept variables.
+
+In case of power outage or restart the ESP needs to get current time from a server, otherwise it will not follow the schedule. Without knowing the time, it will keep the last target temperature until an NTP server or Home Assistant can be contacted.
 
 I am planning to add a 433MHz receiver to support multiple external temperature sensors (as in [hckk04](https://github.com/rp3tya/esp4home/blob/master/esphome/hckk04.README.md))
 
