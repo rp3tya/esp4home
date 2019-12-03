@@ -1,0 +1,63 @@
+esphome:
+  name: xlights
+  platform: ESP8266
+  board: d1_mini
+  includes:
+  - webserver.h
+
+wifi:
+  networks:
+    ssid: !secret ssid
+    password: !secret pass
+
+logger:
+  esp8266_store_log_strings_in_flash: false
+
+ota:
+
+api:
+
+status_led:
+  pin:
+    number: D4
+    inverted: yes
+
+globals:
+  - id: strobe_on
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+switch:
+- platform: gpio
+  pin:
+    number: 5
+    inverted: no
+  id: io5
+  name: "X-mas Lights"
+  icon: "mdi:pine-tree"
+- platform: template
+  name: "Strobe"
+  lambda: 'return id(strobe_on);'
+  turn_on_action:
+  - globals.set:
+      id: strobe_on
+      value: 'true'
+  turn_off_action:
+  - globals.set:
+      id: strobe_on
+      value: 'false'
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(strobe_on);'
+          then:
+            switch.toggle: io5
+
+custom_component:
+- lambda: |-
+    auto ws = new MyWebServer();
+    return {ws};
