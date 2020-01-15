@@ -1,0 +1,84 @@
+esphome:
+  name: gagarf
+  platform: ESP8266
+  board: d1_mini
+
+logger:
+  level: DEBUG
+  esp8266_store_log_strings_in_flash: False
+
+wifi:
+  networks:
+  - ssid: !secret ssid
+    password: !secret pass
+  power_save_mode: none
+  fast_connect: no
+
+api:
+  password: !secret api_pass
+  services:
+  - service: transmit
+    variables:
+      code1: int
+      code2: int
+    then:
+    - lambda: "id(tx_code1)  = code1;"
+    - lambda: "id(tx_code2)  = code2;"
+    - script.execute: transmit_code  
+
+ota:
+  port: 8266
+
+#############################
+
+status_led:
+  pin:
+    number: GPIO2
+    inverted: True
+
+globals:
+- id: tx_pin
+  type: int
+  restore_value: no
+  initial_value: '14'
+- id: tx_code1
+  type: int
+  restore_value: no
+  initial_value: '0'
+- id: tx_code2
+  type: int
+  restore_value: no
+  initial_value: '0'
+
+script:
+  - id: transmit_code
+    then:
+      - logger.log:
+          tag: script
+          format: "TX %x"
+          args: ['(id(tx_code1) << 16) + id(tx_code2)']
+      - lambda: |-
+          int pin = id(tx_pin);
+          uint32_t code = (id(tx_code1) << 16) + id(tx_code2);
+          const uint32_t short_delay = 470;
+          const uint32_t loong_delay = 900;
+          const uint32_t reset_delay = 8800;
+          noInterrupts();
+          pinMode(pin, OUTPUT);
+          digitalWrite(pin, LOW); delayMicroseconds(reset_delay);
+          for (int r = 1; r <= 30; r++) {
+            for (uint8_t i = 25; i > 0; i--) {
+              uint32_t bit = code & (uint32_t)pow(2, i-1);
+              if (bit > 0) {
+                  digitalWrite(pin, LOW);  delayMicroseconds(loong_delay);
+                  digitalWrite(pin, HIGH); delayMicroseconds(short_delay);
+              } else {
+                  digitalWrite(pin, LOW);  delayMicroseconds(short_delay);
+                  digitalWrite(pin, HIGH); delayMicroseconds(loong_delay);
+              }
+            }
+            digitalWrite(pin, LOW); delayMicroseconds(reset_delay);
+          }
+          pinMode(pin, INPUT);
+          interrupts();
+
