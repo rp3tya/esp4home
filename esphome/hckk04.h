@@ -50,8 +50,7 @@ class HCKK04Sensor : public Component {
   int sid = 0;
   Sensor *temperature_sensor = new Sensor();
   Sensor *humidity_sensor = new Sensor();
-  HCKK04Sensor(int sensor_id) : Component() {
-    sid = sensor_id;
+  HCKK04Sensor() : Component() {
   }
   void setup() override {
     pinMode(RX_PIN, INPUT);
@@ -66,7 +65,7 @@ class HCKK04Sensor : public Component {
       uint32 hm = pack >> 0 & 0xFF;
       pack = 0;
 
-      if (sid == id) {
+      if (id == house_code->value()) {
         temperature_sensor->publish_state(tm/10.0);
         humidity_sensor->publish_state(hm);
       }

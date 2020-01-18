@@ -2,6 +2,7 @@ esphome:
   name: hckk04
   platform: ESP8266
   board: d1_mini
+  esp8266_restore_from_flash: True
   includes:
   - hckk04.h
 
@@ -17,6 +18,12 @@ wifi:
   fast_connect: no
 
 api:
+  services:
+  - service: configure
+    variables:
+      code: int
+    then:
+    - lambda: "id(house_code) = code;"
 
 ota:
   port: 8266
@@ -31,10 +38,16 @@ status_led:
     number: GPIO2
     inverted: True
 
+globals:
+- id: house_code
+  type: int
+  restore_value: yes
+  initial_value: '0'
+
 sensor:
 - platform: custom
   lambda: |-
-    auto hckk04 = new HCKK04Sensor(112);
+    auto hckk04 = new HCKK04Sensor();
     App.register_component(hckk04);
     return { 
       hckk04->temperature_sensor,
