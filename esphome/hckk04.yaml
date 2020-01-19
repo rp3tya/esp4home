@@ -29,6 +29,15 @@ api:
         if (0<=index && index<cc) {
           id(house_code)[index] = code;
         }
+  - service: release
+    variables:
+      index: int
+    then:
+    - lambda: |-
+        int cc = sizeof(id(house_code)) / sizeof(int);
+        if (0<=index && index<cc) {
+          id(house_code)[index] = 0;
+        }
 
 ota:
   port: 8266

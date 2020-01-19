@@ -82,13 +82,26 @@ class HCKK04Sensor : public Component {
       uint32 hm = pack >> 0 & 0xFF;
       pack = 0;
       //
-      int hci = -1;
+      int fai = -1; // first available index
+      int hci = -1; // house code index
+      int hcv = -1; // house code value
       for (int i=0; i<sensor_count; i++) {
-        if (id == house_code->value()[i]) {
-          hci = i;
-          temperature_sensors[i]->publish_state(tm/10.0);
-          humidity_sensors[i]->publish_state(hm);
+        hcv = house_code->value()[i];
+        if (hcv == 0) {
+          fai = (fai < 0) ? i : fai; // remember available index
+        } else if (hcv == id) {
+          hci = i; // remember device index
         }
+      }
+      if (hci == -1 && fai != -1) {
+        // new house code, save to first available index
+        hci = fai;
+        house_code->value()[hci] = id;
+      }
+      if (hci >= 0 && hci < sensor_count) {
+        // known house code, publish readings
+        temperature_sensors[hci]->publish_state(tm/10.0);
+        humidity_sensors[hci]->publish_state(hm);
       }
       //
       ESP_LOGI("main", "House Code: %d Temperature: %.1f Humidity: %d Index: %d", id, tm/10.0, hm, hci);
