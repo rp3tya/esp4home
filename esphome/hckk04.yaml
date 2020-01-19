@@ -21,9 +21,14 @@ api:
   services:
   - service: configure
     variables:
+      index: int
       code: int
     then:
-    - lambda: "id(house_code) = code;"
+    - lambda: |-
+        int cc = sizeof(id(house_code)) / sizeof(int);
+        if (0<=index && index<cc) {
+          id(house_code)[index] = code;
+        }
 
 ota:
   port: 8266
@@ -40,28 +45,171 @@ status_led:
 
 globals:
 - id: house_code
-  type: int
+  type: int[12]
   restore_value: yes
-  initial_value: '0'
+
+text_sensor:
+  - platform: template
+    id: house_codes
+    name: "House Codes"
+    lambda: |-
+      char txt[50] = {0};
+      int cc = sizeof(id(house_code)) / sizeof(int);
+      for (int i=0; i<cc; i++) {
+        sprintf(txt, "%s\n#%d:%d", txt, i, id(house_code)[i]);
+      }
+      return { txt };
+    update_interval: 60s
 
 sensor:
 - platform: custom
   lambda: |-
     auto hckk04 = new HCKK04Sensor();
     App.register_component(hckk04);
-    return { 
-      hckk04->temperature_sensor,
-      hckk04->humidity_sensor
-    };
+    return hckk04->sensors;
   sensors:
+  # Temperature Sensors
   - id: home_hckk04_tmp
     name: "Home HCKK04 Temperature"
     unit_of_measurement: °C
     accuracy_decimals: 1
     filters:
     - debounce: 1s
+  - id: home_hckk04_tmp_01
+    name: "Home HCKK04 Temperature #1"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_02
+    name: "Home HCKK04 Temperature #2"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_03
+    name: "Home HCKK04 Temperature #3"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_04
+    name: "Home HCKK04 Temperature #4"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_05
+    name: "Home HCKK04 Temperature #5"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_06
+    name: "Home HCKK04 Temperature #6"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_07
+    name: "Home HCKK04 Temperature #7"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_08
+    name: "Home HCKK04 Temperature #8"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_09
+    name: "Home HCKK04 Temperature #9"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_10
+    name: "Home HCKK04 Temperature #10"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_tmp_11
+    name: "Home HCKK04 Temperature #11"
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  # Humidity Sensors
   - id: home_hckk04_hum
     name: "Home HCKK04 Humidity"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_01
+    name: "Home HCKK04 Humidity #1"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_02
+    name: "Home HCKK04 Humidity #2"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_03
+    name: "Home HCKK04 Humidity #3"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_04
+    name: "Home HCKK04 Humidity #4"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_05
+    name: "Home HCKK04 Humidity #5"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_06
+    name: "Home HCKK04 Humidity #6"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_07
+    name: "Home HCKK04 Humidity #7"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_08
+    name: "Home HCKK04 Humidity #8"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_09
+    name: "Home HCKK04 Humidity #9"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_10
+    name: "Home HCKK04 Humidity #10"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    filters:
+    - debounce: 1s
+  - id: home_hckk04_hum_11
+    name: "Home HCKK04 Humidity #11"
     unit_of_measurement: "%"
     accuracy_decimals: 1
     filters:

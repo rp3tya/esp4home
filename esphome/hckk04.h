@@ -46,16 +46,33 @@ ICACHE_RAM_ATTR void handler() {
  * Sensor
  */
 class HCKK04Sensor : public Component {
+ private:
+  int sensor_count;
+  std::vector<Sensor*> temperature_sensors{};
+  std::vector<Sensor*> humidity_sensors{};
  public:
-  int sid = 0;
-  Sensor *temperature_sensor = new Sensor();
-  Sensor *humidity_sensor = new Sensor();
+  std::vector<Sensor*> sensors{};
+
   HCKK04Sensor() : Component() {
+    sensor_count = sizeof(house_code->value()) / sizeof(int);
+    //
+    for (int i=0; i<sensor_count; i++) {
+      Sensor* sensor = new Sensor();
+      temperature_sensors.push_back(sensor);
+      sensors.push_back(sensor);
+    }
+    for (int i=0; i<sensor_count; i++) {
+      Sensor* sensor = new Sensor();
+      humidity_sensors.push_back(sensor);
+      sensors.push_back(sensor);
+    }
   }
+
   void setup() override {
     pinMode(RX_PIN, INPUT);
     attachInterrupt(digitalPinToInterrupt(RX_PIN), handler, CHANGE);
   }
+
   void loop() override {
     if (pack > 0) {
       uint32 id = pack >> 28 & 0xFF;
@@ -64,13 +81,17 @@ class HCKK04Sensor : public Component {
       uint32 cs = pack >> 8 & 0xF;
       uint32 hm = pack >> 0 & 0xFF;
       pack = 0;
-
-      if (id == house_code->value()) {
-        temperature_sensor->publish_state(tm/10.0);
-        humidity_sensor->publish_state(hm);
+      //
+      int hci = -1;
+      for (int i=0; i<sensor_count; i++) {
+        if (id == house_code->value()[i]) {
+          hci = i;
+          temperature_sensors[i]->publish_state(tm/10.0);
+          humidity_sensors[i]->publish_state(hm);
+        }
       }
-
-      ESP_LOGI("main", "House Code: %d   Temperature: %.1f   Humidity: %d", id, tm/10.0, hm);
+      //
+      ESP_LOGI("main", "House Code: %d Temperature: %.1f Humidity: %d Index: %d", id, tm/10.0, hm, hci);
     }
   }
 };
