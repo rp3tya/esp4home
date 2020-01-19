@@ -400,6 +400,11 @@ text_sensor:
     id: schedule_text
     name: "Schedule Text"
     lambda: |-
-      return {"Schedule comes here"};
+      char txt[120];
+      sprintf(txt, "Weekdays: %.2f %.2f %.2f %.2f\nWeekends: %.2f %.2f %.2f %.2f",
+        id(wd1)/100.0, id(wd2)/100.0, id(wd3)/100.0, id(wd4)/100.0,
+        id(we1)/100.0, id(we2)/100.0, id(we3)/100.0, id(we4)/100.0
+      );
+      return { txt };
     update_interval: 60s
 
