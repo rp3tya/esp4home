@@ -62,7 +62,7 @@ text_sensor:
     id: house_codes
     name: "House Codes"
     lambda: |-
-      char txt[50] = {0};
+      char txt[120] = {0};
       int cc = sizeof(id(house_code)) / sizeof(int);
       for (int i=0; i<cc; i++) {
         sprintf(txt, "%s\n#%d:%d", txt, i, id(house_code)[i]);
