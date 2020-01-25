@@ -284,6 +284,7 @@ time:
     id: sntp_time
     timezone: Europe/Bucharest
     servers:
+      - 'sntp.local'
       - 'pool.ntp.org'
     on_time:
       - seconds: 11,51
