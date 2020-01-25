@@ -42,6 +42,7 @@ api:
       then:
         - lambda: |-
             id(setpoint_hold) = target;
+            id(target_hold).publish_state(target);
     - service: configure_schedule
       variables:
         weekday1: int
@@ -62,6 +63,7 @@ api:
             id(we2) = weekend2;
             id(we3) = weekend3;
             id(we4) = weekend4;
+            id(schedule_text).update();
         - script.execute: schedule_logger
     - service: show_schedule
       then:
@@ -402,8 +404,8 @@ text_sensor:
     id: schedule_text
     name: "Schedule Text"
     lambda: |-
-      char txt[120];
-      sprintf(txt, "Weekdays: %.2f %.2f %.2f %.2f\nWeekends: %.2f %.2f %.2f %.2f",
+      char txt[150];
+      sprintf(txt, "Weekdays: %04.2f %04.2f %04.2f %04.2f\nWeekends: %04.2f %04.2f %04.2f %04.2f",
         id(wd1)/100.0, id(wd2)/100.0, id(wd3)/100.0, id(wd4)/100.0,
         id(we1)/100.0, id(we2)/100.0, id(we3)/100.0, id(we4)/100.0
       );
