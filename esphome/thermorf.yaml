@@ -1,0 +1,676 @@
+#      esp32-poe  esp32-cam   
+# DHT: GPIO33     IO14
+# TX:  GPIO32     IO16
+# RX:  GPIO--     IO13
+
+esphome:
+  name: thermorf
+  platform: ESP32
+  board: esp-wrover-kit
+  includes:
+  - hckk04esp32.h
+
+wifi:
+  networks:
+    ssid: !secret ssid
+    password: !secret pass
+  reboot_timeout: 15min
+
+logger:
+  level: DEBUG
+
+ota:
+  port: 3232
+
+web_server:
+  port: 80
+
+status_led:
+  pin:
+    number: GPIO2
+    inverted: True
+
+api:
+  reboot_timeout: 0s
+  services:
+    - service: configure_tx
+      variables:
+        rx_on: int
+        rx_off: int
+      then:
+        - lambda: "id(tx_on)  = rx_on;"
+        - lambda: "id(tx_off) = rx_off;"
+    - service: configure_hold
+      variables:
+        target: int
+      then:
+        - lambda: |-
+            id(setpoint_hold) = target;
+            id(target_hold).publish_state(target);
+    - service: configure_schedule
+      variables:
+        weekday1: int
+        weekday2: int
+        weekday3: int
+        weekday4: int
+        weekend1: int
+        weekend2: int
+        weekend3: int
+        weekend4: int
+      then:
+        - lambda: |-
+            id(wd1) = weekday1;
+            id(wd2) = weekday2;
+            id(wd3) = weekday3;
+            id(wd4) = weekday4;
+            id(we1) = weekend1;
+            id(we2) = weekend2;
+            id(we3) = weekend3;
+            id(we4) = weekend4;
+            id(schedule_text).update();
+        - script.execute: schedule_logger
+    - service: show_schedule
+      then:
+        - script.execute: schedule_logger
+    - service: ring_db103ac
+      variables:
+        payload: string
+      then:
+        - logger.log:
+            tag: service
+            format: "Ringing %s"
+            args: [ 'payload.c_str()' ]
+        - lambda: |-
+            String pac = payload.c_str();
+            int pin = id(gpio_tx);
+            noInterrupts();
+            pinMode(pin, OUTPUT);
+            digitalWrite(pin, HIGH);delayMicroseconds(1650);
+            for (int r = 1; r <= 2; r++) {
+              digitalWrite(pin, LOW); delayMicroseconds(1650);
+              for (int i=0; i < pac.length(); i++) {
+                if (pac[i] == '1') {
+                  digitalWrite(pin, HIGH);delayMicroseconds(100);
+                  digitalWrite(pin, LOW); delayMicroseconds(150);
+                } else if (pac[i] == '0') {
+                  digitalWrite(pin, HIGH);delayMicroseconds(200);
+                  digitalWrite(pin, LOW); delayMicroseconds(050);
+                }
+              }
+            }
+            pinMode(pin, INPUT);
+            interrupts();
+    - service: configure_temp_sensor
+      variables:
+        correction_offset: float
+      then:
+        - lambda: "id(temperature_correction) = correction_offset;"
+    - service: configure_hckk04
+      variables:
+        index: int
+        code: int
+      then:
+      - lambda: |-
+          int cc = sizeof(id(house_code)) / sizeof(int);
+          if (0<=index && index<cc) {
+            id(house_code)[index] = code;
+          }
+    - service: release_hckk04
+      variables:
+        index: int
+      then:
+      - lambda: |-
+          int cc = sizeof(id(house_code)) / sizeof(int);
+          if (0<=index && index<cc) {
+            id(house_code)[index] = 0;
+          }
+    - service: configure_climate_temperature
+      variables:
+        index: int 
+      then:
+        - lambda: |-
+            id(temp_id) = index;
+            float temp = id(temperature).state;
+            switch(id(temp_id)) {
+              case 0: temp = id(home_hckk04_tmp).state; break;     
+              case 1: temp = id(home_hckk04_tmp_01).state; break;     
+              case 2: temp = id(home_hckk04_tmp_02).state; break;     
+              case 3: temp = id(home_hckk04_tmp_03).state; break;     
+              case 4: temp = id(home_hckk04_tmp_04).state; break;     
+              case 5: temp = id(home_hckk04_tmp_05).state; break;     
+              case 6: temp = id(home_hckk04_tmp_06).state; break;     
+              case 7: temp = id(home_hckk04_tmp_07).state; break;     
+              case 8: temp = id(home_hckk04_tmp_08).state; break;     
+              case 9: temp = id(home_hckk04_tmp_09).state; break;     
+              case 10: temp = id(home_hckk04_tmp_10).state; break;     
+              case 11: temp = id(home_hckk04_tmp_11).state; break;     
+            }
+            id(temperature_room).publish_state(temp);
+
+globals:
+  - id: gpio_tx
+    type: int
+    restore_value: no
+    initial_value: '16'
+  - id: tx
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tx_on
+    type: int
+    restore_value: yes
+    initial_value: '0x0c10c10c'
+  - id: tx_off
+    type: int
+    restore_value: yes
+    initial_value: '0x0ff110ff'
+  - id: heating
+    type: bool
+    restore_value: no
+    initial_value: '0'
+  - id: setpoint_hold
+    type: float
+    restore_value: yes
+    initial_value: '20'
+  - id: setpoint_schedule
+    type: float
+    restore_value: yes
+    initial_value: '19'
+  - id: schedule
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: wd1
+    type: int
+    restore_value: yes
+    initial_value: '60021'
+  - id: wd2
+    type: int
+    restore_value: yes
+    initial_value: '70015'
+  - id: wd3
+    type: int
+    restore_value: yes
+    initial_value: '90018'
+  - id: wd4
+    type: int
+    restore_value: yes
+    initial_value: '170019'
+  - id: we1
+    type: int
+    restore_value: yes
+    initial_value: '80021'
+  - id: we2
+    type: int
+    restore_value: yes
+    initial_value: '90015'
+  - id: we3
+    type: int
+    restore_value: yes
+    initial_value: '100020'
+  - id: we4
+    type: int
+    restore_value: yes
+    initial_value: '210018'
+  - id: temperature_correction
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+  - id: house_code
+    type: int[12]
+    restore_value: yes
+  - id: temp_id
+    type: int
+    restore_value: yes
+    initial_value: '-1'
+
+sensor:
+  - platform: dht
+    pin: GPIO14
+    model: AM2302
+    temperature:
+      id: temperature
+      name: "Temperature"
+      filters:
+        - lambda: return x + id(temperature_correction);
+    humidity:
+      id: humidity
+      name: "Humidity"
+    update_interval: 60s
+  - platform: template
+    internal: yes
+    id: temperature_room
+    lambda: |-
+      float temp = id(temperature).state;
+      switch(id(temp_id)) {
+        case 0: temp = id(home_hckk04_tmp).state; break;     
+        case 1: temp = id(home_hckk04_tmp_01).state; break;     
+        case 2: temp = id(home_hckk04_tmp_02).state; break;     
+        case 3: temp = id(home_hckk04_tmp_03).state; break;     
+        case 4: temp = id(home_hckk04_tmp_04).state; break;     
+        case 5: temp = id(home_hckk04_tmp_05).state; break;     
+        case 6: temp = id(home_hckk04_tmp_06).state; break;     
+        case 7: temp = id(home_hckk04_tmp_07).state; break;     
+        case 8: temp = id(home_hckk04_tmp_08).state; break;     
+        case 9: temp = id(home_hckk04_tmp_09).state; break;     
+        case 10: temp = id(home_hckk04_tmp_10).state; break;     
+        case 11: temp = id(home_hckk04_tmp_11).state; break;     
+      }
+      return temp;
+    unit_of_measurement: "°C"
+    update_interval: 60s
+  - platform: template
+    internal: no
+    id: target_schedule
+    name: Setpoint Schedule
+    icon: "mdi:thermometer-lines"
+    lambda: "return id(setpoint_schedule);"
+    unit_of_measurement: "°C"
+    update_interval: 60s
+    on_value:
+      then:
+        - logger.log:
+            format: "Setpoint (schedule): %0.1f"
+            args: [ 'id(setpoint_schedule)' ]
+        - lambda: |-
+            if (id(schedule) && id(setpoint_schedule)!=id(thermostat).target_temperature_low) {
+              auto call = id(thermostat).make_call();
+              call.set_target_temperature_low(id(setpoint_schedule));
+              call.set_target_temperature_high(id(setpoint_schedule)+1.0);
+              call.perform();
+              ESP_LOGI("thermostat", "Target temperature => %.1f", id(setpoint_schedule));
+            }
+  - platform: template
+    internal: no
+    id: target_hold
+    name: Setpoint Hold
+    icon: "mdi:thermometer-minus"
+    lambda: "return id(setpoint_hold);"
+    unit_of_measurement: "°C"
+    on_value:
+      then:
+        - lambda: |-
+            id(setpoint_hold) = x;
+        - logger.log:
+            format: "Setpoint (hold): %0.1f"
+            args: [ 'id(setpoint_hold)' ]
+        - lambda: |-
+            if (!id(schedule) && id(setpoint_hold)!=id(thermostat).target_temperature_low) {
+              auto call = id(thermostat).make_call();
+              call.set_target_temperature_low(id(setpoint_hold));
+              call.set_target_temperature_high(id(setpoint_hold)+1.0);
+              call.perform();
+              ESP_LOGI("thermostat", "Target temperature => %.1f", id(setpoint_hold));
+            }
+  - platform: custom
+    lambda: |-
+      auto hckk04 = new HCKK04Sensor();
+      App.register_component(hckk04);
+      return hckk04->sensors;
+    sensors:
+    # Temperature Sensors
+    - id: home_hckk04_tmp
+      name: "Home HCKK04 Temperature"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_01
+      name: "Home HCKK04 Temperature #1"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_02
+      name: "Home HCKK04 Temperature #2"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_03
+      name: "Home HCKK04 Temperature #3"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_04
+      name: "Home HCKK04 Temperature #4"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_05
+      name: "Home HCKK04 Temperature #5"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_06
+      name: "Home HCKK04 Temperature #6"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_07
+      name: "Home HCKK04 Temperature #7"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_08
+      name: "Home HCKK04 Temperature #8"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_09
+      name: "Home HCKK04 Temperature #9"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_10
+      name: "Home HCKK04 Temperature #10"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_tmp_11
+      name: "Home HCKK04 Temperature #11"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    # Humidity Sensors
+    - id: home_hckk04_hum
+      name: "Home HCKK04 Humidity"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_01
+      name: "Home HCKK04 Humidity #1"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_02
+      name: "Home HCKK04 Humidity #2"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_03
+      name: "Home HCKK04 Humidity #3"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_04
+      name: "Home HCKK04 Humidity #4"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_05
+      name: "Home HCKK04 Humidity #5"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_06
+      name: "Home HCKK04 Humidity #6"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_07
+      name: "Home HCKK04 Humidity #7"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_08
+      name: "Home HCKK04 Humidity #8"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_09
+      name: "Home HCKK04 Humidity #9"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_10
+      name: "Home HCKK04 Humidity #10"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+    - id: home_hckk04_hum_11
+      name: "Home HCKK04 Humidity #11"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+      - debounce: 1s
+      - median:
+
+switch:
+  - platform: template
+    id: heater
+    name: Heater
+    internal: no
+    lambda: |-
+      return id(heating);
+    turn_on_action:
+      - lambda: "id(heating)=true;"
+    turn_off_action:
+      - lambda: "id(heating)=false;"
+  - platform: template
+    internal: no
+    id: time_schedule
+    name: Schedule
+    icon: "mdi:clock"
+    lambda: "return id(schedule);"
+    turn_on_action:
+      - lambda: |-
+          id(schedule) = true;
+      - lambda: |-
+          auto call = id(thermostat).make_call();
+          call.set_target_temperature_low(id(setpoint_schedule));
+          call.set_target_temperature_high(id(setpoint_schedule)+1.0);
+          call.perform();
+    turn_off_action:
+      - lambda: |-
+          id(schedule) = false;
+      - lambda: |-
+          auto call = id(thermostat).make_call();
+          call.set_target_temperature_low(id(setpoint_hold));
+          call.set_target_temperature_high(id(setpoint_hold)+1.0);
+          call.perform();
+
+climate:
+  - platform: bang_bang
+    id: thermostat
+    name: Thermostat 
+    sensor: temperature_room
+    default_target_temperature_low: 20 °C
+    default_target_temperature_high: 22 °C
+    heat_action:
+      - switch.turn_on: heater
+    idle_action:
+      - switch.turn_off: heater
+    visual:
+      min_temperature: 15 °C
+      max_temperature: 25 °C
+      temperature_step: 1.0 °C
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Bucharest
+    servers:
+      - 'pool.ntp.local'
+      - 'pool.ntp.org'
+    on_time:
+      - seconds: 11,51
+        days_of_week: MON-FRI
+        then:
+          - lambda: |-
+              auto time = id(sntp_time).now();
+              if (time.is_valid()) {
+                float temp = id(setpoint_schedule);
+                auto ts = 100*time.hour + time.minute;
+                if (ts == id(wd1)/100) { temp = id(wd1)-100*(id(wd1)/100); }
+                if (ts == id(wd2)/100) { temp = id(wd2)-100*(id(wd2)/100); }
+                if (ts == id(wd3)/100) { temp = id(wd3)-100*(id(wd3)/100); }
+                if (ts == id(wd4)/100) { temp = id(wd4)-100*(id(wd4)/100); }
+                if (temp != id(setpoint_schedule)) {
+                  id(setpoint_schedule) = temp;
+                }
+                ESP_LOGI("time", "Temp: %f", temp);
+              }
+          - logger.log:
+              level: INFO
+              format: "Time WD: %s"
+              args: [ 'id(sntp_time).now().strftime("%Y-%m-%d %H:%M").c_str()' ]
+      - seconds: 11,51
+        days_of_week: SAT,SUN
+        then:
+          - lambda: |-
+              auto time = id(sntp_time).now();
+              if (time.is_valid()) {
+                float temp = id(setpoint_schedule);
+                auto ts = 100*time.hour + time.minute;
+                if (ts == id(we1)/100) { temp = id(we1)-100*(id(we1)/100); }
+                if (ts == id(we2)/100) { temp = id(we2)-100*(id(we2)/100); }
+                if (ts == id(we3)/100) { temp = id(we3)-100*(id(we3)/100); }
+                if (ts == id(we4)/100) { temp = id(we4)-100*(id(we4)/100); }
+                if (temp != id(setpoint_schedule)) {
+                  id(setpoint_schedule) = temp;
+                }
+                ESP_LOGI("time", "Temp: %f", temp);
+              }
+          - logger.log:
+              level: INFO
+              format: "Time WE: %s"
+              args: [ 'id(sntp_time).now().strftime("%Y-%m-%d %H:%M").c_str()' ]
+
+interval:
+  - interval: 55s
+    then:
+      - if:
+          condition:
+            switch.is_on: heater
+          then:
+            - lambda: "id(tx) = id(tx_on);"
+            - script.execute: transmit
+          else:
+            - lambda: "id(tx) = id(tx_off);"
+            - script.execute: transmit
+
+script:
+  - id: transmit
+    then:
+      - logger.log:
+          tag: script
+          format: "TX %x"
+          args: [ 'id(tx)' ]
+      - lambda: |-
+          uint32_t code = id(tx);
+          int pin = id(gpio_tx);
+          const uint32_t pulse_delay = 2100;
+          const uint32_t reset_delay = 4800;
+          noInterrupts();
+          pinMode(pin, OUTPUT);
+          digitalWrite(pin, LOW);
+          delayMicroseconds(reset_delay);
+          for (uint8_t i = 32; i > 0; i--) {
+            uint32_t bit = code & (uint32_t)pow(2, i-1);
+            if (bit > 0) {
+                digitalWrite(pin, HIGH);
+                delayMicroseconds(pulse_delay/2);
+                digitalWrite(pin, LOW);
+                delayMicroseconds(pulse_delay/2);
+            } else {
+                digitalWrite(pin, LOW);
+                delayMicroseconds(pulse_delay/2);
+                digitalWrite(pin, HIGH);
+                delayMicroseconds(pulse_delay/2);
+            }
+          }
+          digitalWrite(pin, LOW);
+          delayMicroseconds(reset_delay);
+          pinMode(pin, INPUT);
+          interrupts();
+  - id: schedule_logger
+    then:
+        - logger.log:
+            level: INFO
+            format: "Weekday schedule: %06d %06d %06d %06d"
+            args: [ 'id(wd1)', 'id(wd2)', 'id(wd3)', 'id(wd4)' ]
+        - logger.log:
+            level: INFO
+            format: "Weekend schedule: %06d %06d %06d %06d"
+            args: [ 'id(we1)', 'id(we2)', 'id(we3)', 'id(we4)' ]
+        - logger.log:
+            level: INFO
+            format: "Schedule: %s"
+            args: [ 'id(schedule) ? "ON" : "OFF"' ]
+        - logger.log:
+            level: INFO
+            format: "Setpoint (schedule): %0.1f"
+            args: [ 'id(setpoint_schedule)' ]
+        - logger.log:
+            level: INFO
+            format: "Setpoint (hold): %0.1f"
+            args: [ 'id(setpoint_hold)' ]
+
+text_sensor:
+  - platform: template
+    id: schedule_text
+    name: "Schedule Text"
+    lambda: |-
+      char txt[150];
+      sprintf(txt, "Weekdays: %04.2f %04.2f %04.2f %04.2f\nWeekends: %04.2f %04.2f %04.2f %04.2f",
+        id(wd1)/100.0, id(wd2)/100.0, id(wd3)/100.0, id(wd4)/100.0,
+        id(we1)/100.0, id(we2)/100.0, id(we3)/100.0, id(we4)/100.0
+      );
+      return { txt };
+    update_interval: 60s
+  - platform: template
+    id: house_codes
+    name: "House Codes"
+    lambda: |-
+      char txt[120] = {0};
+      int cc = sizeof(id(house_code)) / sizeof(int);
+      for (int i=0; i<cc; i++) {
+        sprintf(txt, "%s\n#%d:%d", txt, i, id(house_code)[i]);
+      }
+      return { txt };
+    update_interval: 60s
+
