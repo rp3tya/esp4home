@@ -9,6 +9,13 @@ esphome:
   board: esp-wrover-kit
   includes:
   - hckk04esp32.h
+  on_boot:
+    then:
+    - lambda: |-
+        int pin = id(gpio_tx);
+        pinMode(pin, OUTPUT);
+        digitalWrite(pin, LOW);
+
 
 wifi:
   networks:
@@ -98,7 +105,6 @@ api:
                 }
               }
             }
-            pinMode(pin, INPUT);
             interrupts();
     - service: configure_temp_sensor
       variables:
@@ -625,7 +631,6 @@ script:
           }
           digitalWrite(pin, LOW);
           delayMicroseconds(reset_delay);
-          pinMode(pin, INPUT);
           interrupts();
   - id: schedule_logger
     then:
