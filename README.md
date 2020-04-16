@@ -10,6 +10,7 @@ A collection of [ESPHOME](https://esphome.io/) configurations I created implemen
 - [fcmila7w](https://github.com/rp3tya/esp4home/blob/master/esphome/fcmila7w.README.md): light bulb
 - [gabu](https://github.com/rp3tya/esp4home/blob/master/esphome/gabu.README.md): doorbell and gate controller
 - [hckk04](https://github.com/rp3tya/esp4home/blob/master/esphome/hckk04.README.md): wireless temperature sensor gateway
+- [thermorf](https://github.com/rp3tya/esp4home/blob/master/esphome/thermorf.README.md): wireless thermostat with wireless temperature
 - [xtree](https://github.com/rp3tya/esp4home/blob/master/esphome/xtree.README.md): initially battery-powered Christmas Tree lights made smarter
 - [esplava](https://github.com/rp3tya/esp4home/tree/master/esplava): touch-controlled dimming light
 - [esprobi](https://github.com/rp3tya/esp4home/tree/master/esprobi): a whole house on an ESP
