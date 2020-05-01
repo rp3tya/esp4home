@@ -14,17 +14,17 @@ ICACHE_RAM_ATTR void handler() {
   const unsigned long time = micros();
   const unsigned long duration = time - lastTime;
   //
-  if (duration > 500 && duration < 700) {
+  if (duration > 400 && duration < 700) {
     if (digitalRead(RX_PIN) == LOW) {
       // pulse
     }
-  } else if (duration > 700 && duration < 900) {
+  } else if (duration > 700 && duration < 1000) {
     if (digitalRead(RX_PIN) == HIGH) {
       code <<= 1;
       cnt++;
       code |= 0;
     }
-  } else if (duration > 1500 && duration < 1900) {
+  } else if (duration > 1500 && duration < 2000) {
     if (digitalRead(RX_PIN) == HIGH) {
       code <<= 1;
       cnt++;
