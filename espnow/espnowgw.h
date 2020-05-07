@@ -1,6 +1,13 @@
 #include "esphome.h"
 #include <esp_now.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
+
+uint8_t macaddr[] = {0x00,0x00,0x00,0x00,0x00,0x00};
+void initVariant() {
+    WiFi.mode(WIFI_STA);
+    esp_wifi_set_mac(ESP_IF_WIFI_STA, &macaddr[0]);
+}
 
 typedef struct struct_message {
   float temp;
@@ -9,11 +16,11 @@ typedef struct struct_message {
 } struct_message;
 
 struct_message sensorData;
-volatile uint64_t pack = 0;
 
 /**
  * Sensor
  */
+float pack;
 class EspNowSensor : public Component {
  private:
   int sensor_count;
@@ -32,8 +39,6 @@ class EspNowSensor : public Component {
   }
 
   void setup() override {
-    WiFi.mode(WIFI_STA);
-
     esp_now_init();
     esp_now_register_recv_cb([](const uint8_t * mac, const uint8_t *incomingData, int len) {
       memcpy(&sensorData, incomingData, sizeof(sensorData));
@@ -43,14 +48,11 @@ class EspNowSensor : public Component {
 
   void loop() override {
     if (pack > 0) {
-      uint32_t id = pack;
+      ESP_LOGI("main", "Message: %f", pack);
+      temperature_sensors[0]->publish_state(pack);
+      //
       pack = 0;
-      //
-      temperature_sensors[0]->publish_state(id);
-      //
-      ESP_LOGI("main", "Message: %d", id);
     }
   }
 };
-
 
