@@ -3,6 +3,7 @@ esphome:
   platform: ESP32
   board: esp32-poe
   includes:
+  - espnow_common.h
   - espnowgw.h
 
 ethernet:
@@ -32,7 +33,7 @@ globals:
 sensor:
 - platform: custom
   lambda: |-
-    auto ens = new EspNowSensor();
+    auto ens = new EspNowSensor(1);
     App.register_component(ens);
     return ens->sensors;
   sensors:

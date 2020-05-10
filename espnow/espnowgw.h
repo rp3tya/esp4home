@@ -3,32 +3,30 @@
 #include <WiFi.h>
 #include <esp_wifi.h>
 
-uint8_t macaddr[] = {0x00,0x00,0x00,0x00,0x00,0x00};
+uint8_t remoteMac[6];
+uint8_t localMac[6];
+
 void initVariant() {
+    memcpy(localMac, &mac, sizeof(mac));
     WiFi.mode(WIFI_STA);
-    esp_wifi_set_mac(ESP_IF_WIFI_STA, &macaddr[0]);
+    esp_wifi_set_mac(ESP_IF_WIFI_STA, &localMac[0]);
 }
 
-typedef struct struct_message {
-  float temp;
-  float hum;
-  float pres;
-} struct_message;
-
-struct_message sensorData;
+struct_status myStatus;
+struct_command myCommand;
+int pack;
 
 /**
  * Sensor
  */
-float pack;
-class EspNowSensor : public Component {
+class EspNowSensor : public PollingComponent {
  private:
   int sensor_count;
   std::vector<Sensor*> temperature_sensors{};
  public:
   std::vector<Sensor*> sensors{};
 
-  EspNowSensor() : Component() {
+  EspNowSensor(int sid) : PollingComponent(5000) {
     sensor_count = sizeof(enid->value()) / sizeof(int);
     //
     for (int i=0; i<sensor_count; i++) {
@@ -39,20 +37,41 @@ class EspNowSensor : public Component {
   }
 
   void setup() override {
+    memcpy(remoteMac, &mac, sizeof(mac)); remoteMac[5] = 1;
+    //
+    WiFi.mode(WIFI_STA);
+    //
     esp_now_init();
-    esp_now_register_recv_cb([](const uint8_t * mac, const uint8_t *incomingData, int len) {
-      memcpy(&sensorData, incomingData, sizeof(sensorData));
-      pack = sensorData.temp;
+    //
+    esp_now_peer_info_t peeri;
+    peeri.ifidx = ESP_IF_WIFI_STA;
+    peeri.channel = 0;
+    peeri.encrypt = 0;
+    memcpy(peeri.peer_addr, &remoteMac, sizeof(remoteMac));
+    esp_now_add_peer(&peeri);
+    //
+    esp_now_register_send_cb([](const uint8_t *mac_addr, esp_now_send_status_t state) {
+      //
+    });
+    esp_now_register_recv_cb([](const uint8_t *mac_addr, const uint8_t *data, int len) {
+      memcpy(&myStatus, data, sizeof(myStatus));
+      pack = myStatus.switches;
     });
   }
 
-  void loop() override {
-    if (pack > 0) {
-      ESP_LOGI("main", "Message: %f", pack);
-      temperature_sensors[0]->publish_state(pack);
-      //
-      pack = 0;
-    }
+  void update() override {
+    temperature_sensors[0]->publish_state(pack);
+    //
+    myCommand.state = millis();
+    sendState();
   }
+
+void sendState() {
+  uint8_t bs[sizeof(myCommand)];
+  memcpy(bs, &myCommand, sizeof(myCommand));
+  esp_now_send(NULL, bs, sizeof(myCommand));
+}
+
 };
+
 
